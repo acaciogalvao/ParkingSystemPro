@@ -1,11 +1,66 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pt-BR">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    
+    <!-- Viewport and Basic Meta -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta name="description" content="Sistema completo de gerenciamento de estacionamento mobile-first" />
+    <meta name="keywords" content="estacionamento, gestão, mobile, app, veículos, parking" />
+    <meta name="author" content="ParkSystem Pro" />
+    
+    <!-- PWA Meta Tags -->
+    <meta name="application-name" content="ParkSystem Pro" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="ParkSystem Pro" />
+    <meta name="msapplication-TileColor" content="#3B82F6" />
+    <meta name="msapplication-config" content="/browserconfig.xml" />
+    <meta name="theme-color" content="#3B82F6" />
+    
+    <!-- Manifest -->
+    <link rel="manifest" href="/manifest.json" />
+    
+    <!-- Icons -->
+    <link rel="icon" type="image/png" sizes="32x32" href="/icons/icon-192x192.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/icons/icon-192x192.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/icons/icon-192x192.png" />
+    <link rel="apple-touch-icon" sizes="152x152" href="/icons/icon-192x192.png" />
+    <link rel="apple-touch-icon" sizes="144x144" href="/icons/icon-192x192.png" />
+    <link rel="apple-touch-icon" sizes="120x120" href="/icons/icon-192x192.png" />
+    <link rel="apple-touch-icon" sizes="114x114" href="/icons/icon-192x192.png" />
+    <link rel="apple-touch-icon" sizes="76x76" href="/icons/icon-192x192.png" />
+    <link rel="apple-touch-icon" sizes="72x72" href="/icons/icon-192x192.png" />
+    <link rel="apple-touch-icon" sizes="60x60" href="/icons/icon-192x192.png" />
+    <link rel="apple-touch-icon" sizes="57x57" href="/icons/icon-192x192.png" />
+    
+    <!-- Microsoft Icons -->
+    <meta name="msapplication-TileImage" content="/icons/icon-256x256.png" />
+    <meta name="msapplication-square70x70logo" content="/icons/icon-192x192.png" />
+    <meta name="msapplication-square150x150logo" content="/icons/icon-256x256.png" />
+    <meta name="msapplication-wide310x150logo" content="/icons/icon-384x384.png" />
+    <meta name="msapplication-square310x310logo" content="/icons/icon-512x512.png" />
+    
+    <!-- Open Graph -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="ParkSystem Pro" />
+    <meta property="og:description" content="Sistema completo de gerenciamento de estacionamento mobile-first" />
+    <meta property="og:image" content="/icons/icon-512x512.png" />
+    <meta property="og:url" content="/" />
+    <meta property="og:site_name" content="ParkSystem Pro" />
+    
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="ParkSystem Pro" />
+    <meta name="twitter:description" content="Sistema completo de gerenciamento de estacionamento mobile-first" />
+    <meta name="twitter:image" content="/icons/icon-512x512.png" />
+    
+    <!-- Preload Critical Resources -->
+    <link rel="preload" href="/src/index.css" as="style" />
+    <link rel="preload" href="/src/main.tsx" as="script" />
+    
     <title>ParkSystem Pro - Gerenciamento de Estacionamento</title>
-    <meta name="description" content="Sistema completo de gerenciamento de estacionamento" />
   </head>
   <body>
     <div id="root"></div>
