@@ -296,7 +296,7 @@ export function VehicleEntry({ onSuccess }: VehicleEntryProps) {
             <Button 
               type="submit" 
               className="w-full h-12 text-base font-medium" 
-              disabled={isSubmitting || !formData.plate || !formData.type || !formData.model || !formData.ownerName}
+              disabled={isSubmitting || !formData.plate || !plateValidation.isValid || !formData.type || !formData.model || !formData.ownerName}
             >
               {isSubmitting ? 'Registrando...' : 'Registrar Entrada'}
             </Button>
