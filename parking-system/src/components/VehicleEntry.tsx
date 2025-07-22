@@ -56,16 +56,15 @@ const formatPlateInput = (value: string): string => {
     return cleaned;
   }
   
-  // Se tem 3 letras e depois números, pode ser Mercosul
-  const mercosulPattern = /^[A-Z]{3}[\d[A-Z]]*$/;
-  if (mercosulPattern.test(cleaned)) {
-    return cleaned; // Mercosul - sem hífen
-  }
-  
-  // Se tem 3 letras e o próximo char é número, pode estar digitando formato antigo
-  if (cleaned.length === 4 && /^[A-Z]{3}\d$/.test(cleaned)) {
-    // Adicionar hífen automaticamente
-    return cleaned.slice(0, 3) + '-' + cleaned.slice(3);
+  // Auto-formatação para formato antigo: ABC1234 -> ABC-1234
+  // Se tem 3 letras seguidas de números (sem hífen), adicionar hífen
+  if (cleaned.length >= 4 && /^[A-Z]{3}[\d]/.test(cleaned)) {
+    // Verificar se ainda não é Mercosul (que tem padrão ABC1A12)
+    const isMercosul = /^[A-Z]{3}\d[A-Z]/.test(cleaned);
+    if (!isMercosul) {
+      // É formato antigo - adicionar hífen após as 3 primeiras letras
+      return cleaned.slice(0, 3) + '-' + cleaned.slice(3);
+    }
   }
   
   return cleaned;
