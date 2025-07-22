@@ -89,6 +89,17 @@ export function VehicleEntry({ onSuccess }: VehicleEntryProps) {
     setIsSubmitting(true);
     setMessage(null);
 
+    // Validar placa antes do envio
+    const plateCheck = validateBrazilianPlate(formData.plate);
+    if (!plateCheck.isValid) {
+      setMessage({
+        type: 'error',
+        text: plateCheck.error || 'Placa inválida'
+      });
+      setIsSubmitting(false);
+      return;
+    }
+
     try {
       // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 1500));
@@ -108,6 +119,9 @@ export function VehicleEntry({ onSuccess }: VehicleEntryProps) {
         ownerName: "",
         ownerPhone: ""
       });
+      
+      // Reset validation
+      setPlateValidation({ isValid: false, type: null, error: null });
       
       setTimeout(() => {
         onSuccess();
