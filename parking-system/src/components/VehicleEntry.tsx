@@ -138,7 +138,14 @@ export function VehicleEntry({ onSuccess }: VehicleEntryProps) {
   };
 
   const handleInputChange = (field: string, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    if (field === 'plate') {
+      const formattedValue = formatPlateInput(value);
+      const validation = validateBrazilianPlate(formattedValue);
+      setPlateValidation(validation);
+      setFormData(prev => ({ ...prev, [field]: formattedValue }));
+    } else {
+      setFormData(prev => ({ ...prev, [field]: value }));
+    }
   };
 
   return (
