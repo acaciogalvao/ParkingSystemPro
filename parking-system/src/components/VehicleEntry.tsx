@@ -82,6 +82,7 @@ export function VehicleEntry({ onSuccess }: VehicleEntryProps) {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [plateValidation, setPlateValidation] = useState<{ isValid: boolean; type: string | null; error: string | null }>({ isValid: false, type: null, error: null });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
