@@ -11,6 +11,66 @@ interface VehicleEntryProps {
   onSuccess: () => void;
 }
 
+// Validação de placas brasileiras (antigo e Mercosul)
+const validateBrazilianPlate = (plate: string): { isValid: boolean; type: string | null; error: string | null } => {
+  if (!plate) {
+    return { isValid: false, type: null, error: null };
+  }
+
+  // Remove espaços
+  const cleanPlate = plate.trim().replace(/\s+/g, '');
+  
+  // Formato antigo: ABC-1234 (3 letras + hífen + 4 números)
+  const oldFormatRegex = /^[A-Z]{3}-\d{4}$/;
+  
+  // Formato Mercosul: ABC1A12 (3 letras + 1 número + 1 letra + 2 números)
+  const mercosulRegex = /^[A-Z]{3}\d[A-Z]\d{2}$/;
+  
+  if (oldFormatRegex.test(cleanPlate)) {
+    return { isValid: true, type: 'antigo', error: null };
+  }
+  
+  if (mercosulRegex.test(cleanPlate)) {
+    return { isValid: true, type: 'mercosul', error: null };
+  }
+  
+  // Verificar se está em processo de digitação (não mostrar erro até ter pelo menos 7 caracteres)
+  if (cleanPlate.length < 7) {
+    return { isValid: false, type: null, error: null };
+  }
+  
+  return { 
+    isValid: false, 
+    type: null, 
+    error: 'Formato inválido. Use ABC-1234 (antigo) ou ABC1A12 (Mercosul)' 
+  };
+};
+
+// Formatação automática da placa durante digitação
+const formatPlateInput = (value: string): string => {
+  // Remove caracteres não permitidos e converte para maiúsculo
+  let cleaned = value.toUpperCase().replace(/[^A-Z0-9-]/g, '');
+  
+  // Se já tem hífen, é formato antigo - manter como está
+  if (cleaned.includes('-')) {
+    return cleaned;
+  }
+  
+  // Se tem 3 letras e depois números, pode ser Mercosul
+  const mercosulPattern = /^[A-Z]{3}[\d[A-Z]]*$/;
+  if (mercosulPattern.test(cleaned)) {
+    return cleaned; // Mercosul - sem hífen
+  }
+  
+  // Se tem 3 letras e o próximo char é número, pode estar digitando formato antigo
+  if (cleaned.length === 4 && /^[A-Z]{3}\d$/.test(cleaned)) {
+    // Adicionar hífen automaticamente
+    return cleaned.slice(0, 3) + '-' + cleaned.slice(3);
+  }
+  
+  return cleaned;
+};
+
 export function VehicleEntry({ onSuccess }: VehicleEntryProps) {
   const [formData, setFormData] = useState({
     plate: "",
