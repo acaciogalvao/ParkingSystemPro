@@ -186,18 +186,39 @@ export function VehicleEntry({ onSuccess }: VehicleEntryProps) {
               </Select>
             </div>
 
-            {/* License Plate - Mobile Optimized */}
+            {/* License Plate - Mobile Optimized com Validação */}
             <div className="space-y-2">
               <Label htmlFor="plate" className="text-sm font-medium">Placa do Veículo</Label>
               <Input
                 id="plate"
-                placeholder="ABC-1234"
+                placeholder="ABC-1234 ou ABC1A12"
                 value={formData.plate}
-                onChange={(e) => handleInputChange('plate', e.target.value.toUpperCase())}
+                onChange={(e) => handleInputChange('plate', e.target.value)}
                 maxLength={8}
-                className="h-12 text-center text-lg font-mono tracking-wider"
+                className={`h-12 text-center text-lg font-mono tracking-wider ${
+                  plateValidation.error 
+                    ? 'border-red-500 focus:border-red-500 focus:ring-red-500' 
+                    : plateValidation.isValid 
+                    ? 'border-green-500 focus:border-green-500 focus:ring-green-500' 
+                    : ''
+                }`}
                 required
               />
+              {plateValidation.error && (
+                <p className="text-sm text-red-600 flex items-center gap-1">
+                  <AlertCircle className="w-4 h-4" />
+                  {plateValidation.error}
+                </p>
+              )}
+              {plateValidation.isValid && plateValidation.type && (
+                <p className="text-sm text-green-600 flex items-center gap-1">
+                  <CheckCircle className="w-4 h-4" />
+                  Placa válida (formato {plateValidation.type})
+                </p>
+              )}
+              <p className="text-xs text-gray-500">
+                Formatos aceitos: ABC-1234 (antigo) ou ABC1A12 (Mercosul)
+              </p>
             </div>
 
             {/* Vehicle Details - Stacked for Mobile */}
