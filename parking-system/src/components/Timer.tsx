@@ -21,7 +21,7 @@ export function Timer({ entryTime, className = "", showFee = false }: TimerProps
     seconds: 0,
     formatted: "00:00:00"
   });
-  const [estimatedFee, setEstimatedFee] = useState<string>("5.00");
+  const [estimatedFee, setEstimatedFee] = useState<string>("0.00");
 
   useEffect(() => {
     const calculateDuration = () => {
