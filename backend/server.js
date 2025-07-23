@@ -495,10 +495,7 @@ app.post('/api/vehicles/exit', async (req, res) => {
                 spot: vehicle.spot,
                 duration: `${durationHours.toFixed(1)}h`,
                 fee: `R$ ${fee.toFixed(2)}`,
-                exitTime: exitTime.toLocaleTimeString('pt-BR', { 
-                    hour: '2-digit', 
-                    minute: '2-digit' 
-                })
+                exitTime: formatBrazilianTime(exitTime)
             }
         });
 
