@@ -92,7 +92,7 @@ class ParkSystemTester:
             {
                 "name": "Old Format Car",
                 "data": {
-                    "plate": "ABC-1234",
+                    "plate": "GHI-5678",
                     "type": "car",
                     "model": "Honda Civic",
                     "color": "Branco",
