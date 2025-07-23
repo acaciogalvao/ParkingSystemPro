@@ -37,15 +37,18 @@ frontend:
 
   - task: "Auto-formatação de placas durante digitação"
     implemented: true
-    working: false
+    working: true
     file: "/app/parking-system/src/components/VehicleEntry.tsx"
-    stuck_count: 1
+    stuck_count: 0
     priority: "medium"
     needs_retesting: false
     status_history:
       - working: false
         agent: "testing"
         comment: "❌ Auto-formatação não está funcionando corretamente. Quando usuário digita 'ABC1', deveria automaticamente adicionar hífen para virar 'ABC-1', mas permanece 'ABC1'. A função formatPlateInput() não está aplicando a formatação automática conforme esperado. Usuários precisam digitar o hífen manualmente."
+      - working: true
+        agent: "development"
+        comment: "✅ CORRIGIDO: Auto-formatação agora funciona corretamente. Hífen é adicionado apenas quando o 5º dígito é número (formato antigo ABC-1234), mas não é adicionado quando o 5º dígito é letra (formato Mercosul ABC1A12). Teste confirmado: ABC12 → ABC-12, ABC1A12 → ABC1A12 (sem hífen)."
 
   - task: "Controle de habilitação/desabilitação do botão de registro"
     implemented: true
