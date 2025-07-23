@@ -460,6 +460,7 @@ export default function ParkingSystem() {
                           <Timer 
                             entryTime={spot.vehicle.entryTime} 
                             className="text-[8px] text-white"
+                            vehicleType="motorcycle"
                           />
                         </div>
                       )}
