@@ -6,6 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { VehicleEntry } from "@/components/VehicleEntry";
 import { VehicleSearch } from "@/components/VehicleSearch";
 import { Reports } from "@/components/Reports";
+import { Timer } from "@/components/Timer";
 import { 
   Car, 
   Bike, 
@@ -21,7 +22,7 @@ import {
 } from "lucide-react";
 
 interface Vehicle {
-  id: number;
+  id: string;
   plate: string;
   type: 'car' | 'motorcycle';
   model: string;
@@ -29,6 +30,14 @@ interface Vehicle {
   ownerName: string;
   entryTime: string;
   spot: string;
+  entryTimestamp?: string;
+  duration?: {
+    hours: number;
+    minutes: number;
+    seconds: number;
+    formatted: string;
+  };
+  estimatedFee?: string;
 }
 
 interface ParkingSpot {
@@ -36,6 +45,20 @@ interface ParkingSpot {
   type: 'car' | 'motorcycle';
   isOccupied: boolean;
   isReserved: boolean;
+  vehicleId?: string | null;
+  vehicle?: {
+    id: string;
+    plate: string;
+    ownerName: string;
+    entryTime: string;
+    duration: {
+      hours: number;
+      minutes: number;
+      seconds: number;
+      formatted: string;
+    };
+    estimatedFee: string;
+  };
 }
 
 interface DashboardStats {
