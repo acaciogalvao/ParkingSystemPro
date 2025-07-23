@@ -421,7 +421,26 @@ export default function ParkingSystem() {
 
           {/* Entry Tab */}
           <TabsContent value="entry">
-            <VehicleEntry onSuccess={() => setActiveTab("dashboard")} />
+            <VehicleEntry onSuccess={() => {
+              setActiveTab("dashboard");
+              // Refresh dashboard data after successful entry
+              setTimeout(async () => {
+                try {
+                  const response = await fetch(`${backendUrl}/api/dashboard/stats`);
+                  if (response.ok) {
+                    const data = await response.json();
+                    setStats(data);
+                  }
+                  const vehiclesResponse = await fetch(`${backendUrl}/api/vehicles`);
+                  if (vehiclesResponse.ok) {
+                    const vehiclesData = await vehiclesResponse.json();
+                    setRecentVehicles(vehiclesData.slice(0, 3));
+                  }
+                } catch (error) {
+                  console.error('Error refreshing data:', error);
+                }
+              }, 1000);
+            }} />
           </TabsContent>
 
           <TabsContent value="history">
