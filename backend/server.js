@@ -331,10 +331,7 @@ app.post('/api/vehicles/entry', async (req, res) => {
             data: {
                 vehicleId: vehicleId,
                 spot: spot,
-                entryTime: entryTime.toLocaleTimeString('pt-BR', { 
-                    hour: '2-digit', 
-                    minute: '2-digit' 
-                })
+                entryTime: formatBrazilianTime(entryTime)
             }
         });
 
