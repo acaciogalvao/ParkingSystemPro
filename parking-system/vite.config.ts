@@ -23,7 +23,8 @@ export default defineConfig({
   server: {
     host: '0.0.0.0',
     port: 3000,
-    strictPort: true
+    strictPort: true,
+    allowedHosts: ['4c1294fe-3b3f-4f52-9341-2487272b2d77.preview.emergentagent.com']
   },
   resolve: {
     alias: {
