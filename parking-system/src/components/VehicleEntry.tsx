@@ -20,10 +20,10 @@ const validateBrazilianPlate = (plate: string): { isValid: boolean; type: string
   // Remove espaços
   const cleanPlate = plate.trim().replace(/\s+/g, '');
   
-  // Formato antigo: ABC-1234 (3 letras + hífen + 4 números)
+  // Formato antigo: ABC-1234 (3 letras + hífen + 4 números = 8 caracteres)
   const oldFormatRegex = /^[A-Z]{3}-\d{4}$/;
   
-  // Formato Mercosul: ABC1A12 (3 letras + 1 número + 1 letra + 2 números)
+  // Formato Mercosul: ABC1A12 (3 letras + 1 número + 1 letra + 2 números = 7 caracteres)
   const mercosulRegex = /^[A-Z]{3}\d[A-Z]\d{2}$/;
   
   if (oldFormatRegex.test(cleanPlate)) {
