@@ -511,6 +511,9 @@ app.post('/api/spots/sync', async (req, res) => {
 // Get all parking spots
 app.get('/api/spots', async (req, res) => {
     try {
+        // Auto-sync spots with vehicles for consistency
+        await synchronizeParkingSpots();
+        
         const spotsCollection = db.collection('parking_spots');
         const spots = await spotsCollection.find({}, { projection: { _id: 0 } }).toArray();
 
