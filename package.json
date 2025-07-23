@@ -1,0 +1,20 @@
+{
+  "name": "fullstack-app",
+  "version": "1.0.0",
+  "description": "Aplicação Full-stack com React + FastAPI + MongoDB",
+  "scripts": {
+    "setup": "./setup_local.sh",
+    "start": "./start_app.sh",
+    "dev": "./start_app.sh",
+    "backend": "cd backend && source venv/bin/activate && uvicorn server:app --host 0.0.0.0 --port 8001 --reload",
+    "frontend": "cd frontend && yarn start"
+  },
+  "keywords": [
+    "react", 
+    "fastapi", 
+    "mongodb", 
+    "fullstack"
+  ],
+  "author": "Seu Nome",
+  "license": "MIT"
+}
