@@ -631,7 +631,7 @@ app.get('/api/spots/with-duration', async (req, res) => {
                 
                 if (vehicle) {
                     const entryTime = new Date(vehicle.entryTime);
-                    const currentTime = new Date();
+                    const currentTime = getBrazilianTime();
                     const durationMs = currentTime - entryTime;
                     
                     const hours = Math.floor(durationMs / (1000 * 60 * 60));
