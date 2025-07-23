@@ -342,7 +342,7 @@ export default function ParkingSystem() {
                       <p className="text-xs text-gray-500">{vehicle.entryTime}</p>
                       {vehicle.entryTimestamp && (
                         <div className="text-xs text-green-600 mt-1">
-                          <Timer entryTime={vehicle.entryTimestamp} showFee={true} />
+                          <Timer entryTime={vehicle.entryTimestamp} showFee={true} vehicleType={vehicle.type} />
                         </div>
                       )}
                     </div>
