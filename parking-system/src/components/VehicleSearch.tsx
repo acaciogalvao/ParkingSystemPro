@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Timer } from "@/components/Timer";
 import { Car, Bike, Search, Clock, DollarSign, LogOut } from "lucide-react";
 
 interface Vehicle {
@@ -17,6 +18,14 @@ interface Vehicle {
   entryTime: string;
   spot: string;
   status: string;
+  entryTimestamp?: string;
+  duration?: {
+    hours: number;
+    minutes: number;
+    seconds: number;
+    formatted: string;
+  };
+  estimatedFee?: string;
 }
 
 export function VehicleSearch() {
