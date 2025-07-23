@@ -511,9 +511,11 @@ app.get('/api/vehicles/:vehicleId/duration', async (req, res) => {
         const minutes = Math.floor((durationMs % (1000 * 60 * 60)) / (1000 * 60));
         const seconds = Math.floor((durationMs % (1000 * 60)) / 1000);
         
-        // Calculate estimated fee (no minimum fee, starts from 0)
+        // Calculate estimated fee based on vehicle type (no minimum fee, starts from 0)
         const durationMinutes = durationMs / (1000 * 60);
-        const estimatedFee = durationMinutes * 0.05; // R$0.05 per minute (R$3 per hour)
+        // Cars: R$10/hour = R$0.1667/min, Motorcycles: R$7/hour = R$0.1167/min
+        const ratePerMinute = vehicle.type === 'car' ? (10 / 60) : (7 / 60);
+        const estimatedFee = durationMinutes * ratePerMinute;
 
         res.json({
             vehicleId: vehicleId,
