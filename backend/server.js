@@ -521,7 +521,7 @@ app.get('/api/vehicles/:vehicleId/duration', async (req, res) => {
         }
 
         const entryTime = new Date(vehicle.entryTime);
-        const currentTime = new Date();
+        const currentTime = getBrazilianTime();
         const durationMs = currentTime - entryTime;
         
         // Calculate hours, minutes, seconds
