@@ -401,10 +401,7 @@ app.get('/api/vehicles/search', async (req, res) => {
                 color: vehicle.color,
                 ownerName: vehicle.ownerName,
                 ownerPhone: vehicle.ownerPhone,
-                entryTime: entryTime.toLocaleTimeString('pt-BR', { 
-                    hour: '2-digit', 
-                    minute: '2-digit' 
-                }),
+                entryTime: formatBrazilianTime(entryTime),
                 spot: vehicle.spot,
                 status: vehicle.status
             };
