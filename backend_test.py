@@ -113,7 +113,7 @@ class ParkSystemTester:
             {
                 "name": "Old Format Motorcycle",
                 "data": {
-                    "plate": "XYZ-9876",
+                    "plate": "MNO-4321",
                     "type": "motorcycle", 
                     "model": "Yamaha MT-07",
                     "color": "Azul",
