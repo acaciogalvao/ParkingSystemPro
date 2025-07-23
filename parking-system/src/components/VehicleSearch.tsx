@@ -23,30 +23,98 @@ interface Vehicle {
 export function VehicleSearch() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedVehicle, setSelectedVehicle] = useState<Vehicle | null>(null);
+  const [vehicles, setVehicles] = useState<Vehicle[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [processing, setProcessing] = useState(false);
 
-  // Dados simulados de veículos estacionados
-  const vehicles: Vehicle[] = [
-    {
-      id: 1,
-      plate: "ABC-1234",
-      type: "car",
-      model: "Honda Civic",
-      color: "Branco",
-      ownerName: "João Silva",
-      ownerPhone: "(11) 99999-9999",
-      entryTime: "14:30",
-      spot: "A-15",
-      duration: "2h 30min",
-      amount: 15.00
-    },
-    {
-      id: 2,
-      plate: "XYZ-5678",
-      type: "motorcycle",
-      model: "Yamaha MT-03",
-      color: "Preto",
-      ownerName: "Maria Santos",
-      ownerPhone: "(11) 88888-8888",
+  const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8001';
+
+  // Fetch vehicles on component mount
+  useEffect(() => {
+    const fetchVehicles = async () => {
+      try {
+        const response = await fetch(`${backendUrl}/api/vehicles`);
+        if (response.ok) {
+          const data = await response.json();
+          setVehicles(data);
+        }
+      } catch (error) {
+        console.error('Error fetching vehicles:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchVehicles();
+  }, [backendUrl]);
+
+  // Search vehicles
+  const handleSearch = async () => {
+    if (!searchTerm.trim()) {
+      // If no search term, fetch all vehicles
+      try {
+        const response = await fetch(`${backendUrl}/api/vehicles`);
+        if (response.ok) {
+          const data = await response.json();
+          setVehicles(data);
+        }
+      } catch (error) {
+        console.error('Error fetching vehicles:', error);
+      }
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const response = await fetch(`${backendUrl}/api/vehicles/search?plate=${encodeURIComponent(searchTerm)}&owner=${encodeURIComponent(searchTerm)}`);
+      if (response.ok) {
+        const result = await response.json();
+        setVehicles(result.data);
+      }
+    } catch (error) {
+      console.error('Error searching vehicles:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Process vehicle exit
+  const handleExit = async (vehicle: Vehicle) => {
+    try {
+      setProcessing(true);
+      const response = await fetch(`${backendUrl}/api/vehicles/exit`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          vehicleId: vehicle.id
+        }),
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        alert(`Saída processada com sucesso!\nPlaca: ${result.data.plate}\nVaga: ${result.data.spot}\nDuração: ${result.data.duration}\nValor: ${result.data.fee}`);
+        
+        // Refresh vehicles list
+        const vehiclesResponse = await fetch(`${backendUrl}/api/vehicles`);
+        if (vehiclesResponse.ok) {
+          const data = await vehiclesResponse.json();
+          setVehicles(data);
+        }
+        
+        setSelectedVehicle(null);
+      } else {
+        const error = await response.json();
+        alert(`Erro: ${error.detail}`);
+      }
+    } catch (error) {
+      console.error('Error processing exit:', error);
+      alert('Erro ao processar saída');
+    } finally {
+      setProcessing(false);
+    }
+  };
       entryTime: "13:45",
       spot: "M-08",
       duration: "3h 15min",
