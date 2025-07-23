@@ -64,9 +64,9 @@ export function VehicleSearch() {
   // Search vehicles
   const handleSearch = async () => {
     if (!searchTerm.trim()) {
-      // If no search term, fetch all vehicles
+      // If no search term, fetch all vehicles with duration
       try {
-        const response = await fetch(`${backendUrl}/vehicles`);
+        const response = await fetch(`${backendUrl}/vehicles/with-duration`);
         if (response.ok) {
           const data = await response.json();
           setVehicles(data);
