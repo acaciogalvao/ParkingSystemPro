@@ -305,9 +305,10 @@ export function VehicleEntry({ onSuccess }: VehicleEntryProps) {
                 <Label htmlFor="ownerPhone" className="text-sm font-medium">Telefone (Opcional)</Label>
                 <Input
                   id="ownerPhone"
-                  placeholder="(11) 99999-9999"
+                  placeholder="(99)99999-9999"
                   value={formData.ownerPhone}
                   onChange={(e) => handleInputChange('ownerPhone', e.target.value)}
+                  maxLength={14}
                   className="h-12"
                 />
               </div>
