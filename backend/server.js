@@ -720,7 +720,7 @@ app.put('/api/vehicles/:vehicleId', async (req, res) => {
             vehicleId: vehicleId,
             plate: vehicle.plate,
             spot: vehicle.spot,
-            timestamp: new Date().toISOString(),
+            timestamp: getBrazilianTime().toISOString(),
             data: {
                 updatedFields: updateFields,
                 previousData: {
