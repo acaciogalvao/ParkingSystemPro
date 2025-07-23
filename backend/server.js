@@ -485,6 +485,173 @@ app.post('/api/vehicles/exit', async (req, res) => {
     }
 });
 
+// Get vehicle with real-time duration
+app.get('/api/vehicles/:vehicleId/duration', async (req, res) => {
+    try {
+        const { vehicleId } = req.params;
+        const vehiclesCollection = db.collection('vehicles');
+        
+        const vehicle = await vehiclesCollection.findOne({
+            id: vehicleId,
+            status: 'parked'
+        });
+
+        if (!vehicle) {
+            return res.status(404).json({ detail: 'Veículo não encontrado' });
+        }
+
+        const entryTime = new Date(vehicle.entryTime);
+        const currentTime = new Date();
+        const durationMs = currentTime - entryTime;
+        
+        // Calculate hours, minutes, seconds
+        const hours = Math.floor(durationMs / (1000 * 60 * 60));
+        const minutes = Math.floor((durationMs % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((durationMs % (1000 * 60)) / 1000);
+        
+        // Calculate estimated fee
+        const durationHours = durationMs / (1000 * 60 * 60);
+        const estimatedFee = Math.max(5.0, durationHours * 3.0);
+
+        res.json({
+            vehicleId: vehicleId,
+            plate: vehicle.plate,
+            spot: vehicle.spot,
+            entryTime: vehicle.entryTime,
+            currentTime: currentTime.toISOString(),
+            duration: {
+                hours: hours,
+                minutes: minutes,
+                seconds: seconds,
+                totalMinutes: Math.floor(durationMs / (1000 * 60)),
+                totalSeconds: Math.floor(durationMs / 1000),
+                formatted: `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`
+            },
+            estimatedFee: estimatedFee.toFixed(2)
+        });
+
+    } catch (error) {
+        console.error('Error getting vehicle duration:', error);
+        res.status(500).json({ detail: 'Erro ao calcular tempo de permanência' });
+    }
+});
+
+// Get all vehicles with real-time duration
+app.get('/api/vehicles/with-duration', async (req, res) => {
+    try {
+        const vehiclesCollection = db.collection('vehicles');
+        const vehicles = await vehiclesCollection.find({ status: 'parked' }).toArray();
+        
+        const vehiclesWithDuration = vehicles.map(vehicle => {
+            const entryTime = new Date(vehicle.entryTime);
+            const currentTime = new Date();
+            const durationMs = currentTime - entryTime;
+            
+            const hours = Math.floor(durationMs / (1000 * 60 * 60));
+            const minutes = Math.floor((durationMs % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((durationMs % (1000 * 60)) / 1000);
+            
+            const durationHours = durationMs / (1000 * 60 * 60);
+            const estimatedFee = Math.max(5.0, durationHours * 3.0);
+            
+            return {
+                id: vehicle.id,
+                plate: vehicle.plate,
+                type: vehicle.type,
+                model: vehicle.model,
+                color: vehicle.color,
+                ownerName: vehicle.ownerName,
+                ownerPhone: vehicle.ownerPhone,
+                entryTime: entryTime.toLocaleTimeString('pt-BR', { 
+                    hour: '2-digit', 
+                    minute: '2-digit' 
+                }),
+                spot: vehicle.spot,
+                status: vehicle.status,
+                duration: {
+                    hours: hours,
+                    minutes: minutes,
+                    seconds: seconds,
+                    totalMinutes: Math.floor(durationMs / (1000 * 60)),
+                    totalSeconds: Math.floor(durationMs / 1000),
+                    formatted: `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`
+                },
+                estimatedFee: estimatedFee.toFixed(2),
+                entryTimestamp: vehicle.entryTime
+            };
+        });
+
+        res.json(vehiclesWithDuration);
+
+    } catch (error) {
+        console.error('Error getting vehicles with duration:', error);
+        res.status(500).json({ detail: 'Erro ao buscar veículos com tempo de permanência' });
+    }
+});
+
+// Get parking spots with real-time vehicle duration
+app.get('/api/spots/with-duration', async (req, res) => {
+    try {
+        // Auto-sync spots with vehicles for consistency
+        await synchronizeParkingSpots();
+        
+        const spotsCollection = db.collection('parking_spots');
+        const vehiclesCollection = db.collection('vehicles');
+        
+        const spots = await spotsCollection.find({}, { projection: { _id: 0 } }).toArray();
+        
+        // For occupied spots, get vehicle details with duration
+        const spotsWithDuration = await Promise.all(spots.map(async (spot) => {
+            if (spot.isOccupied && spot.vehicleId) {
+                const vehicle = await vehiclesCollection.findOne({
+                    id: spot.vehicleId,
+                    status: 'parked'
+                });
+                
+                if (vehicle) {
+                    const entryTime = new Date(vehicle.entryTime);
+                    const currentTime = new Date();
+                    const durationMs = currentTime - entryTime;
+                    
+                    const hours = Math.floor(durationMs / (1000 * 60 * 60));
+                    const minutes = Math.floor((durationMs % (1000 * 60 * 60)) / (1000 * 60));
+                    const seconds = Math.floor((durationMs % (1000 * 60)) / 1000);
+                    
+                    const durationHours = durationMs / (1000 * 60 * 60);
+                    const estimatedFee = Math.max(5.0, durationHours * 3.0);
+                    
+                    return {
+                        ...spot,
+                        vehicle: {
+                            id: vehicle.id,
+                            plate: vehicle.plate,
+                            ownerName: vehicle.ownerName,
+                            entryTime: vehicle.entryTime,
+                            duration: {
+                                hours: hours,
+                                minutes: minutes,
+                                seconds: seconds,
+                                totalMinutes: Math.floor(durationMs / (1000 * 60)),
+                                totalSeconds: Math.floor(durationMs / 1000),
+                                formatted: `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`
+                            },
+                            estimatedFee: estimatedFee.toFixed(2)
+                        }
+                    };
+                }
+            }
+            
+            return spot;
+        }));
+
+        res.json(spotsWithDuration);
+
+    } catch (error) {
+        console.error('Error getting parking spots with duration:', error);
+        res.status(500).json({ detail: `Erro ao buscar vagas com tempo de permanência: ${error.message}` });
+    }
+});
+
 // Update vehicle information
 app.put('/api/vehicles/:vehicleId', async (req, res) => {
     try {
