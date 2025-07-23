@@ -42,9 +42,9 @@ export function Timer({ entryTime, className = "", showFee = false }: TimerProps
         formatted
       });
 
-      // Calculate estimated fee (minimum R$5.00, R$3.00 per hour)
-      const durationHours = diffMs / (1000 * 60 * 60);
-      const fee = Math.max(5.0, durationHours * 3.0);
+      // Calculate estimated fee (no minimum fee, starts from 0, R$0.05 per minute)
+      const durationMinutes = diffMs / (1000 * 60);
+      const fee = durationMinutes * 0.05; // R$0.05 per minute (R$3 per hour)
       setEstimatedFee(fee.toFixed(2));
     };
 
