@@ -4,6 +4,8 @@ Uma aplicação full-stack moderna com frontend React, backend FastAPI e banco d
 
 ## 🎯 Setup Rápido
 
+**💡 Este projeto usa MongoDB Atlas (nuvem) - não precisa instalar MongoDB local!**
+
 ### Opção 1: Setup Automático (Recomendado)
 ```bash
 # 1. Baixe/clone o projeto
@@ -16,6 +18,9 @@ Uma aplicação full-stack moderna com frontend React, backend FastAPI e banco d
 
 ### Opção 2: Setup Manual
 Consulte o arquivo [SETUP_LOCAL.md](SETUP_LOCAL.md) para instruções detalhadas.
+
+### 📚 Documentação Adicional
+- [MONGODB_ATLAS.md](MONGODB_ATLAS.md) - Configuração específica do MongoDB Atlas
 
 ## 🌐 Acessar a Aplicação
 
