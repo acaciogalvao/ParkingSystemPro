@@ -197,7 +197,7 @@ class ParkSystemTester:
             {
                 "name": "Duplicate Vehicle",
                 "data": {
-                    "plate": "ABC-1234",  # Should already be registered
+                    "plate": "GHI-5678",  # Should be a new plate we're registering
                     "type": "car",
                     "model": "Another Car",
                     "color": "Preto",
