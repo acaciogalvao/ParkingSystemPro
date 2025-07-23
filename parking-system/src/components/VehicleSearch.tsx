@@ -215,6 +215,11 @@ export function VehicleSearch() {
                       <Clock className="w-3 h-3" />
                       {vehicle.entryTime}
                     </p>
+                    {vehicle.entryTimestamp && (
+                      <div className="text-xs text-green-600 mt-1">
+                        <Timer entryTime={vehicle.entryTimestamp} showFee={true} />
+                      </div>
+                    )}
                   </div>
                   <div>
                     <p className="text-gray-500">Status</p>
