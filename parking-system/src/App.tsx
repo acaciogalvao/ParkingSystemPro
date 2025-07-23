@@ -80,7 +80,7 @@ export default function ParkingSystem() {
         }
 
         // Fetch parking spots
-        const spotsResponse = await fetch(`${backendUrl}/api/spots`);
+        const spotsResponse = await fetch(`${backendUrl}/spots`);
         if (spotsResponse.ok) {
           const spotsData = await spotsResponse.json();
           setParkingSpots(spotsData);
