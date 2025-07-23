@@ -83,8 +83,8 @@ pip install -r requirements.txt
 if [ ! -f ".env" ]; then
     print_status "Criando arquivo .env do backend..."
     cat << EOF > .env
-MONGO_URL=mongodb://localhost:27017
-DB_NAME=test_database
+MONGO_URL="mongodb+srv://parkingsystempro:parkingsystempro271182@parkingsystempro.q2hda0p.mongodb.net/?retryWrites=true&w=majority&appName=parkingsystempro"
+DB_NAME="parkingsystempro"
 EOF
 else
     print_warning "Arquivo .env do backend já existe."
