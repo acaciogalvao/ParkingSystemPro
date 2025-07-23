@@ -24,7 +24,15 @@ export default defineConfig({
     host: '0.0.0.0',
     port: 3000,
     strictPort: true,
-    allowedHosts: ['.preview.emergentagent.com']
+    allowedHosts: ['.preview.emergentagent.com'],
+    proxy: {
+      '/api': {
+        target: 'http://localhost:8001',
+        changeOrigin: true,
+        secure: false,
+        rewrite: (path) => path
+      }
+    }
   },
   resolve: {
     alias: {
