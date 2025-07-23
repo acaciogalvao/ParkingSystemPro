@@ -814,7 +814,7 @@ app.get('/api/dashboard/stats', async (req, res) => {
         const availableSpots = await spotsCollection.countDocuments({ isOccupied: false });
 
         // Calculate today's revenue (simplified)
-        const todayStart = new Date();
+        const todayStart = getBrazilianTime();
         todayStart.setHours(0, 0, 0, 0);
         
         const todayExits = await vehiclesCollection.find({
