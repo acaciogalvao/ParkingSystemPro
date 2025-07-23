@@ -34,7 +34,7 @@ const validateBrazilianPlate = (plate: string): { isValid: boolean; type: string
     return { isValid: true, type: 'mercosul', error: null };
   }
   
-  // Verificar se está em processo de digitação (não mostrar erro até ter pelo menos 7 caracteres)
+  // Verificar se está em processo de digitação (não mostrar erro até ter pelo menos 7 caracteres para Mercosul ou 8 para antigo)
   if (cleanPlate.length < 7) {
     return { isValid: false, type: null, error: null };
   }
