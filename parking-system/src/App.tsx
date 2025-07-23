@@ -73,7 +73,7 @@ export default function ParkingSystem() {
         }
 
         // Fetch recent vehicles
-        const vehiclesResponse = await fetch(`${backendUrl}/api/vehicles`);
+        const vehiclesResponse = await fetch(`${backendUrl}/vehicles`);
         if (vehiclesResponse.ok) {
           const vehiclesData = await vehiclesResponse.json();
           setRecentVehicles(vehiclesData.slice(0, 3)); // Only show 3 most recent
