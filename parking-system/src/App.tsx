@@ -95,15 +95,15 @@ export default function ParkingSystem() {
           setStats(statsData);
         }
 
-        // Fetch recent vehicles
-        const vehiclesResponse = await fetch(`${backendUrl}/vehicles`);
+        // Fetch recent vehicles with duration
+        const vehiclesResponse = await fetch(`${backendUrl}/vehicles/with-duration`);
         if (vehiclesResponse.ok) {
           const vehiclesData = await vehiclesResponse.json();
           setRecentVehicles(vehiclesData.slice(0, 3)); // Only show 3 most recent
         }
 
-        // Fetch parking spots
-        const spotsResponse = await fetch(`${backendUrl}/spots`);
+        // Fetch parking spots with duration
+        const spotsResponse = await fetch(`${backendUrl}/spots/with-duration`);
         if (spotsResponse.ok) {
           const spotsData = await spotsResponse.json();
           setParkingSpots(spotsData);
@@ -118,6 +118,11 @@ export default function ParkingSystem() {
     };
 
     fetchDashboardData();
+    
+    // Set up real-time updates every 5 seconds
+    const interval = setInterval(fetchDashboardData, 5000);
+    
+    return () => clearInterval(interval);
   }, [backendUrl]);
 
   // Refresh data when tab changes to dashboard
