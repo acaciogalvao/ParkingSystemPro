@@ -23,22 +23,27 @@ print_error() {
 
 echo "🚀 Iniciando aplicação full-stack..."
 
-# Verificar se MongoDB está rodando
-echo "🔍 Verificando MongoDB..."
-if pgrep -x "mongod" > /dev/null; then
-    print_status "MongoDB já está rodando"
+# Verificar se está usando MongoDB Atlas ou local
+echo "🔍 Verificando configuração do MongoDB..."
+if grep -q "mongodb+srv" backend/.env 2>/dev/null; then
+    print_status "Usando MongoDB Atlas (nuvem) - não precisa iniciar localmente"
 else
-    print_warning "MongoDB não está rodando. Tentando iniciar..."
-    
-    # Tentar diferentes formas de iniciar MongoDB
-    if command -v mongod &> /dev/null; then
-        mongod --fork --logpath /tmp/mongodb.log --dbpath /tmp/mongodb-data || {
-            print_error "Erro ao iniciar MongoDB. Inicie manualmente: mongod"
-            exit 1
-        }
+    # Verificar se MongoDB local está rodando
+    if pgrep -x "mongod" > /dev/null; then
+        print_status "MongoDB local já está rodando"
     else
-        print_error "MongoDB não encontrado. Instale o MongoDB primeiro."
-        exit 1
+        print_warning "MongoDB local não está rodando. Tentando iniciar..."
+        
+        # Tentar diferentes formas de iniciar MongoDB
+        if command -v mongod &> /dev/null; then
+            mongod --fork --logpath /tmp/mongodb.log --dbpath /tmp/mongodb-data || {
+                print_error "Erro ao iniciar MongoDB. Inicie manualmente: mongod"
+                exit 1
+            }
+        else
+            print_error "MongoDB não encontrado. Instale o MongoDB primeiro."
+            exit 1
+        fi
     fi
 fi
 
