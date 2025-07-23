@@ -41,7 +41,7 @@ export function VehicleSearch() {
   useEffect(() => {
     const fetchVehicles = async () => {
       try {
-        const response = await fetch(`${backendUrl}/vehicles`);
+        const response = await fetch(`${backendUrl}/vehicles/with-duration`);
         if (response.ok) {
           const data = await response.json();
           setVehicles(data);
@@ -54,6 +54,11 @@ export function VehicleSearch() {
     };
 
     fetchVehicles();
+    
+    // Set up real-time updates every 5 seconds
+    const interval = setInterval(fetchVehicles, 5000);
+    
+    return () => clearInterval(interval);
   }, [backendUrl]);
 
   // Search vehicles
