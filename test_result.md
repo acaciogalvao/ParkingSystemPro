@@ -93,4 +93,4 @@ agent_communication:
   - agent: "setup_and_configuration"
     message: "✅ SISTEMA CONFIGURADO PARA RODAR EXTERNAMENTE - Sistema ParkSystem Pro está rodando localmente e acessível externamente. Dependências instaladas com yarn, servidor Vite rodando na porta 5173, interface funcional testada. URLs de acesso: Local http://localhost:5173 | Externo http://10.64.162.175:5173"
   - agent: "development"
-    message: "✅ AUTO-FORMATAÇÃO DE PLACAS CORRIGIDA - Implementada lógica correta para inserir hífen apenas quando o 5º dígito for número (formato antigo ABC-1234). Formato Mercosul (ABC1A12) não recebe hífen. Sistema testado e funcionando corretamente. URL externa funcionando: https://4c1294fe-3b3f-4f52-9341-2487272b2d77.preview.emergentagent.com"
+    message: "✅ AUTO-FORMATAÇÃO DE PLACAS CORRIGIDA - Implementada lógica correta para inserir hífen apenas quando o 5º dígito for número (formato antigo ABC-1234). Formato Mercosul (ABC1A12) não recebe hífen. Sistema testado e funcionando corretamente. URL externa funcionando: https://f9b83ebb-9b60-41b2-a4f7-a1dd56f26e45.preview.emergentagent.com"
