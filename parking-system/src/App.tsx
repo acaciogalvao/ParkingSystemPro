@@ -66,7 +66,7 @@ export default function ParkingSystem() {
     const fetchDashboardData = async () => {
       try {
         // Fetch stats
-        const statsResponse = await fetch(`${backendUrl}/api/dashboard/stats`);
+        const statsResponse = await fetch(`${backendUrl}/dashboard/stats`);
         if (statsResponse.ok) {
           const statsData = await statsResponse.json();
           setStats(statsData);
