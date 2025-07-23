@@ -78,7 +78,7 @@ backend:
   - task: "API Health Check Endpoint"
     implemented: true
     working: true
-    file: "/app/backend/server.py"
+    file: "/app/backend/server.js"
     stuck_count: 0
     priority: "high"
     needs_retesting: false
@@ -86,11 +86,14 @@ backend:
       - working: true
         agent: "testing"
         comment: "✅ Health check endpoint funcionando corretamente. GET /api/health retorna status 'healthy' com timestamp. API respondendo em http://localhost:8001."
+      - working: true
+        agent: "testing"
+        comment: "✅ MIGRAÇÃO VALIDADA: Health check endpoint funcionando perfeitamente após migração FastAPI→Express.js. Retorna status 'healthy' com timestamp correto. Teste passou com sucesso."
 
   - task: "Validação de placas brasileiras no backend"
     implemented: true
     working: true
-    file: "/app/backend/server.py"
+    file: "/app/backend/server.js"
     stuck_count: 0
     priority: "high"
     needs_retesting: false
@@ -98,11 +101,14 @@ backend:
       - working: true
         agent: "testing"
         comment: "✅ Validação de placas brasileiras funcionando perfeitamente. Aceita formato antigo (ABC-1234) e Mercosul (ABC1A12). Rejeita corretamente formatos inválidos com mensagens apropriadas. Função validate_brazilian_plate() implementada corretamente."
+      - working: true
+        agent: "testing"
+        comment: "✅ MIGRAÇÃO VALIDADA: Validação de placas brasileiras funcionando perfeitamente após migração FastAPI→Express.js. Função validateBrazilianPlate() aceita formatos antigo (ABC-1234) e Mercosul (ABC1A12), rejeita formatos inválidos corretamente. Testes passaram com sucesso."
 
   - task: "Registro de entrada de veículos"
     implemented: true
     working: true
-    file: "/app/backend/server.py"
+    file: "/app/backend/server.js"
     stuck_count: 0
     priority: "high"
     needs_retesting: false
@@ -110,11 +116,14 @@ backend:
       - working: true
         agent: "testing"
         comment: "✅ Registro de entrada funcionando corretamente. POST /api/vehicles/entry aceita dados válidos, aloca vagas automaticamente (A-01 a A-50 para carros, M-01 a M-20 para motos), previne duplicatas e registra operações no histórico."
+      - working: true
+        agent: "testing"
+        comment: "✅ MIGRAÇÃO VALIDADA: Registro de entrada funcionando perfeitamente após migração FastAPI→Express.js. POST /api/vehicles/entry aloca vagas automaticamente (A-03, M-02, M-03 testadas), previne duplicatas, registra no histórico. Validação Joi funcionando. Testes passaram com sucesso."
 
   - task: "Listagem de veículos estacionados"
     implemented: true
     working: true
-    file: "/app/backend/server.py"
+    file: "/app/backend/server.js"
     stuck_count: 0
     priority: "high"
     needs_retesting: false
@@ -122,11 +131,14 @@ backend:
       - working: true
         agent: "testing"
         comment: "✅ Listagem de veículos funcionando corretamente. GET /api/vehicles retorna lista completa de veículos estacionados com estrutura de dados válida incluindo id, placa, tipo, modelo, cor, proprietário, vaga e status."
+      - working: true
+        agent: "testing"
+        comment: "✅ MIGRAÇÃO VALIDADA: Listagem de veículos funcionando perfeitamente após migração FastAPI→Express.js. GET /api/vehicles retorna 6 veículos estacionados com estrutura de dados válida (id, placa, tipo, modelo, cor, proprietário, vaga, status). Teste passou com sucesso."
 
   - task: "Busca de veículos por placa e proprietário"
     implemented: true
     working: true
-    file: "/app/backend/server.py"
+    file: "/app/backend/server.js"
     stuck_count: 0
     priority: "high"
     needs_retesting: false
@@ -134,11 +146,14 @@ backend:
       - working: true
         agent: "testing"
         comment: "✅ Busca de veículos funcionando corretamente. GET /api/vehicles/search aceita parâmetros 'plate' e 'owner', realiza busca case-insensitive com regex e retorna resultados filtrados adequadamente."
+      - working: true
+        agent: "testing"
+        comment: "✅ MIGRAÇÃO VALIDADA: Busca de veículos funcionando perfeitamente após migração FastAPI→Express.js. GET /api/vehicles/search aceita parâmetros 'plate' e 'owner', busca case-insensitive com regex MongoDB funcionando. Retornou 2 resultados para 'ABC', 2 para 'Silva', 0 para filtros combinados. Testes passaram com sucesso."
 
   - task: "Processamento de saída de veículos"
     implemented: true
     working: true
-    file: "/app/backend/server.py"
+    file: "/app/backend/server.js"
     stuck_count: 0
     priority: "high"
     needs_retesting: false
@@ -146,11 +161,14 @@ backend:
       - working: true
         agent: "testing"
         comment: "✅ Processamento de saída funcionando corretamente. POST /api/vehicles/exit calcula duração e taxa (mínimo R$5, R$3/hora), libera vaga, atualiza status do veículo e registra operação no histórico. Rejeita IDs inválidos adequadamente."
+      - working: true
+        agent: "testing"
+        comment: "✅ MIGRAÇÃO VALIDADA: Processamento de saída funcionando perfeitamente após migração FastAPI→Express.js. POST /api/vehicles/exit calcula taxa corretamente (R$5.00 mínimo), libera vaga A-03, atualiza status, registra no histórico. Rejeita IDs inválidos com 404. Testes passaram com sucesso."
 
   - task: "Gerenciamento de vagas de estacionamento"
     implemented: true
     working: true
-    file: "/app/backend/server.py"
+    file: "/app/backend/server.js"
     stuck_count: 0
     priority: "high"
     needs_retesting: false
@@ -158,11 +176,14 @@ backend:
       - working: true
         agent: "testing"
         comment: "✅ Gerenciamento de vagas funcionando corretamente. GET /api/spots retorna 70 vagas (50 carros A-01 a A-50, 20 motos M-01 a M-20). Inicialização automática na startup, controle de ocupação e alocação automática funcionando."
+      - working: true
+        agent: "testing"
+        comment: "✅ MIGRAÇÃO VALIDADA: Gerenciamento de vagas funcionando perfeitamente após migração FastAPI→Express.js. GET /api/spots retorna 70 vagas (50 carros, 20 motos), 3 ocupadas, 64 disponíveis. Inicialização automática, controle de ocupação funcionando. Teste passou com sucesso."
 
   - task: "Estatísticas do dashboard"
     implemented: true
     working: true
-    file: "/app/backend/server.py"
+    file: "/app/backend/server.js"
     stuck_count: 0
     priority: "high"
     needs_retesting: false
@@ -170,11 +191,14 @@ backend:
       - working: true
         agent: "testing"
         comment: "✅ Estatísticas do dashboard funcionando corretamente. GET /api/dashboard/stats retorna contadores de carros/motos estacionados, vagas disponíveis, receita do dia e taxa de ocupação. Cálculos precisos e estrutura de dados válida."
+      - working: true
+        agent: "testing"
+        comment: "✅ MIGRAÇÃO VALIDADA: Estatísticas do dashboard funcionando perfeitamente após migração FastAPI→Express.js. GET /api/dashboard/stats retorna 3 carros, 3 motos, 64 vagas disponíveis, R$0.00 receita hoje, 8.6% ocupação. Cálculos precisos. Teste passou com sucesso."
 
   - task: "Relatório mensal"
     implemented: true
     working: true
-    file: "/app/backend/server.py"
+    file: "/app/backend/server.js"
     stuck_count: 0
     priority: "medium"
     needs_retesting: false
@@ -182,11 +206,14 @@ backend:
       - working: true
         agent: "testing"
         comment: "✅ Relatório mensal funcionando corretamente. GET /api/reports/monthly gera dados de entradas diárias, receita diária e total de operações dos últimos 30 dias. Estrutura adequada para gráficos no frontend."
+      - working: true
+        agent: "testing"
+        comment: "✅ MIGRAÇÃO VALIDADA: Relatório mensal funcionando perfeitamente após migração FastAPI→Express.js. GET /api/reports/monthly gera dados com 6 operações, 1 ponto de entrada diária, 0 pontos de receita diária. Estrutura adequada para gráficos. Teste passou com sucesso."
 
   - task: "Histórico de operações"
     implemented: true
     working: true
-    file: "/app/backend/server.py"
+    file: "/app/backend/server.js"
     stuck_count: 0
     priority: "medium"
     needs_retesting: false
@@ -194,6 +221,9 @@ backend:
       - working: true
         agent: "testing"
         comment: "✅ Histórico de operações funcionando corretamente. GET /api/history retorna últimas 50 operações ordenadas por timestamp, com dados formatados para exibição (tipo, placa, vaga, data/hora)."
+      - working: true
+        agent: "testing"
+        comment: "✅ MIGRAÇÃO VALIDADA: Histórico de operações funcionando perfeitamente após migração FastAPI→Express.js. GET /api/history retorna 6 operações ordenadas por timestamp, dados formatados corretamente (tipo, placa, vaga, data/hora). Última operação: entry - MNO-4321. Teste passou com sucesso."
 
 metadata:
   created_by: "testing_agent"
