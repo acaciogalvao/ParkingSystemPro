@@ -48,76 +48,72 @@ interface DashboardStats {
 
 export default function ParkingSystem() {
   const [activeTab, setActiveTab] = useState("dashboard");
-  
-  // Dados simulados
-  const stats: DashboardStats = {
-    totalCarsParked: 23,
-    totalMotorcyclesParked: 1,
-    availableSpots: 46,
+  const [stats, setStats] = useState<DashboardStats>({
+    totalCarsParked: 0,
+    totalMotorcyclesParked: 0,
+    availableSpots: 0,
     todayRevenue: 0,
-    occupancyRate: 34.3
-  };
+    occupancyRate: 0
+  });
+  const [recentVehicles, setRecentVehicles] = useState<Vehicle[]>([]);
+  const [parkingSpots, setParkingSpots] = useState<ParkingSpot[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const recentVehicles: Vehicle[] = [
-    {
-      id: 1,
-      plate: "ABC-1234",
-      type: "car",
-      model: "Honda Civic",
-      color: "Branco",
-      ownerName: "João Silva",
-      entryTime: "14:30",
-      spot: "A-15"
-    },
-    {
-      id: 2,
-      plate: "XYZ-5678",
-      type: "motorcycle",
-      model: "Yamaha MT-03",
-      color: "Preto",
-      ownerName: "Maria Santos",
-      entryTime: "13:45",
-      spot: "M-08"
-    },
-    {
-      id: 3,
-      plate: "DEF-9012",
-      type: "car",
-      model: "Toyota Corolla",
-      color: "Prata",
-      ownerName: "Pedro Costa",
-      entryTime: "12:15",
-      spot: "A-22"
-    }
-  ];
+  const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8001';
 
-  const generateParkingSpots = (): ParkingSpot[] => {
-    const spots: ParkingSpot[] = [];
-    
-    // 50 vagas para carros (A-01 até A-50)
-    for (let i = 1; i <= 50; i++) {
-      spots.push({
-        id: `A-${i.toString().padStart(2, '0')}`,
-        type: 'car',
-        isOccupied: Math.random() > 0.65,
-        isReserved: Math.random() > 0.95
-      });
-    }
-    
-    // 20 vagas para motos (M-01 até M-20)
-    for (let i = 1; i <= 20; i++) {
-      spots.push({
-        id: `M-${i.toString().padStart(2, '0')}`,
-        type: 'motorcycle',
-        isOccupied: Math.random() > 0.85,
-        isReserved: Math.random() > 0.98
-      });
-    }
-    
-    return spots;
-  };
+  // Fetch dashboard data
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        // Fetch stats
+        const statsResponse = await fetch(`${backendUrl}/api/dashboard/stats`);
+        if (statsResponse.ok) {
+          const statsData = await statsResponse.json();
+          setStats(statsData);
+        }
 
-  const parkingSpots = generateParkingSpots();
+        // Fetch recent vehicles
+        const vehiclesResponse = await fetch(`${backendUrl}/api/vehicles`);
+        if (vehiclesResponse.ok) {
+          const vehiclesData = await vehiclesResponse.json();
+          setRecentVehicles(vehiclesData.slice(0, 3)); // Only show 3 most recent
+        }
+
+        // Fetch parking spots
+        const spotsResponse = await fetch(`${backendUrl}/api/spots`);
+        if (spotsResponse.ok) {
+          const spotsData = await spotsResponse.json();
+          setParkingSpots(spotsData);
+        }
+
+      } catch (error) {
+        console.error('Error fetching dashboard data:', error);
+        // Keep default mock data if API fails
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDashboardData();
+  }, [backendUrl]);
+
+  // Refresh data when tab changes to dashboard
+  useEffect(() => {
+    if (activeTab === "dashboard") {
+      const fetchStats = async () => {
+        try {
+          const response = await fetch(`${backendUrl}/api/dashboard/stats`);
+          if (response.ok) {
+            const data = await response.json();
+            setStats(data);
+          }
+        } catch (error) {
+          console.error('Error refreshing stats:', error);
+        }
+      };
+      fetchStats();
+    }
+  }, [activeTab, backendUrl]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
