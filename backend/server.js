@@ -283,7 +283,7 @@ app.post('/api/vehicles/entry', async (req, res) => {
 
         // Create vehicle entry
         const vehicleId = uuidv4();
-        const entryTime = new Date();
+        const entryTime = getBrazilianTime();
 
         const vehicleData = {
             id: vehicleId,
