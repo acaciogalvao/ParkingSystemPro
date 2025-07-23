@@ -551,8 +551,8 @@ app.get('/api/vehicles/with-duration', async (req, res) => {
             const minutes = Math.floor((durationMs % (1000 * 60 * 60)) / (1000 * 60));
             const seconds = Math.floor((durationMs % (1000 * 60)) / 1000);
             
-            const durationHours = durationMs / (1000 * 60 * 60);
-            const estimatedFee = Math.max(5.0, durationHours * 3.0);
+            const durationMinutes = durationMs / (1000 * 60);
+            const estimatedFee = durationMinutes * 0.05; // R$0.05 per minute (R$3 per hour)
             
             return {
                 id: vehicle.id,
