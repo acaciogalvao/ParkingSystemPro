@@ -17,7 +17,7 @@ let db;
 async function connectToMongoDB() {
     try {
         await client.connect();
-        db = client.db('parksystem');
+        db = client.db('parkingsystempro');
         console.log('Connected to MongoDB');
         await initializeParkingSpots();
     } catch (error) {
