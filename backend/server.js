@@ -849,7 +849,7 @@ app.get('/api/reports/monthly', async (req, res) => {
         const operationsCollection = db.collection('operations_history');
 
         // Get operations from last 30 days
-        const thirtyDaysAgo = new Date();
+        const thirtyDaysAgo = getBrazilianTime();
         thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
         thirtyDaysAgo.setHours(0, 0, 0, 0);
 
