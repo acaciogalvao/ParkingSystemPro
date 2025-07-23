@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Comprehensive Backend API Tests for ParkSystem Pro
-Tests all endpoints with valid and invalid scenarios
+Comprehensive Backend API Tests for ParkSystem Pro - Synchronization Focus
+Tests parking spot synchronization scenarios as requested
 """
 
 import requests
