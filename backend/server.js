@@ -1,0 +1,590 @@
+import express from 'express';
+import cors from 'cors';
+import { MongoClient } from 'mongodb';
+import dotenv from 'dotenv';
+import Joi from 'joi';
+import { v4 as uuidv4 } from 'uuid';
+
+// Load environment variables
+dotenv.config();
+
+// MongoDB connection
+const MONGO_URL = process.env.MONGO_URL || 'mongodb://localhost:27017/parksystem';
+const client = new MongoClient(MONGO_URL);
+let db;
+
+// Connect to MongoDB
+async function connectToMongoDB() {
+    try {
+        await client.connect();
+        db = client.db('parksystem');
+        console.log('Connected to MongoDB');
+        await initializeParkingSpots();
+    } catch (error) {
+        console.error('MongoDB connection error:', error);
+        process.exit(1);
+    }
+}
+
+const app = express();
+
+// Middleware
+app.use(cors({
+    origin: "*", // In production, specify actual origins
+    credentials: true,
+    methods: ["*"],
+    allowedHeaders: ["*"]
+}));
+
+app.use(express.json());
+
+// Joi validation schemas
+const vehicleEntrySchema = Joi.object({
+    plate: Joi.string().required().description('License plate'),
+    type: Joi.string().valid('car', 'motorcycle').required().description('Vehicle type'),
+    model: Joi.string().required().description('Vehicle model'),
+    color: Joi.string().required().description('Vehicle color'),
+    ownerName: Joi.string().required().description('Owner name'),
+    ownerPhone: Joi.string().optional().allow('').description('Owner phone')
+});
+
+const vehicleExitSchema = Joi.object({
+    vehicleId: Joi.string().required().description('Vehicle ID'),
+    exitTime: Joi.string().optional().description('Exit time')
+});
+
+// Helper functions
+function validateBrazilianPlate(plate) {
+    if (!plate) {
+        return { isValid: false, type: null, error: 'Placa é obrigatória' };
+    }
+
+    const cleanPlate = plate.trim().replace(/\s/g, '').toUpperCase();
+
+    // Old format: ABC-1234
+    const oldFormatRegex = /^[A-Z]{3}-\d{4}$/;
+    // Mercosul format: ABC1A12
+    const mercosulRegex = /^[A-Z]{3}\d[A-Z]\d{2}$/;
+
+    if (oldFormatRegex.test(cleanPlate)) {
+        return { isValid: true, type: 'antigo', error: null };
+    }
+
+    if (mercosulRegex.test(cleanPlate)) {
+        return { isValid: true, type: 'mercosul', error: null };
+    }
+
+    return {
+        isValid: false,
+        type: null,
+        error: 'Formato inválido. Use ABC-1234 (antigo) ou ABC1A12 (Mercosul)'
+    };
+}
+
+async function generateSpot(vehicleType) {
+    const spotsCollection = db.collection('parking_spots');
+
+    // Get occupied spots
+    const occupiedSpots = await spotsCollection.find({ isOccupied: true }).toArray();
+    const occupiedIds = occupiedSpots.map(spot => spot.id);
+
+    if (vehicleType === 'car') {
+        for (let i = 1; i <= 50; i++) {
+            const spotId = `A-${i.toString().padStart(2, '0')}`;
+            if (!occupiedIds.includes(spotId)) {
+                return spotId;
+            }
+        }
+    } else { // motorcycle
+        for (let i = 1; i <= 20; i++) {
+            const spotId = `M-${i.toString().padStart(2, '0')}`;
+            if (!occupiedIds.includes(spotId)) {
+                return spotId;
+            }
+        }
+    }
+
+    throw new Error('Não há vagas disponíveis');
+}
+
+async function initializeParkingSpots() {
+    const spotsCollection = db.collection('parking_spots');
+
+    // Check if spots already exist
+    const count = await spotsCollection.countDocuments();
+    if (count > 0) {
+        return;
+    }
+
+    const spots = [];
+
+    // Car spots A-01 to A-50
+    for (let i = 1; i <= 50; i++) {
+        spots.push({
+            id: `A-${i.toString().padStart(2, '0')}`,
+            type: 'car',
+            isOccupied: false,
+            isReserved: false,
+            vehicleId: null
+        });
+    }
+
+    // Motorcycle spots M-01 to M-20
+    for (let i = 1; i <= 20; i++) {
+        spots.push({
+            id: `M-${i.toString().padStart(2, '0')}`,
+            type: 'motorcycle',
+            isOccupied: false,
+            isReserved: false,
+            vehicleId: null
+        });
+    }
+
+    await spotsCollection.insertMany(spots);
+    console.log('Parking spots initialized');
+}
+
+// API Routes
+
+// Health check endpoint
+app.get('/api/health', (req, res) => {
+    res.json({
+        status: 'healthy',
+        timestamp: new Date().toISOString()
+    });
+});
+
+// Register vehicle entry
+app.post('/api/vehicles/entry', async (req, res) => {
+    try {
+        // Validate request body
+        const { error, value } = vehicleEntrySchema.validate(req.body);
+        if (error) {
+            return res.status(400).json({ detail: error.details[0].message });
+        }
+
+        const vehicle = value;
+
+        // Validate plate
+        const plateValidation = validateBrazilianPlate(vehicle.plate);
+        if (!plateValidation.isValid) {
+            return res.status(400).json({ detail: plateValidation.error });
+        }
+
+        // Check if vehicle already exists and is parked
+        const vehiclesCollection = db.collection('vehicles');
+        const existingVehicle = await vehiclesCollection.findOne({
+            plate: vehicle.plate.toUpperCase(),
+            status: 'parked'
+        });
+
+        if (existingVehicle) {
+            return res.status(400).json({ detail: 'Veículo já está estacionado' });
+        }
+
+        // Generate spot
+        const spot = await generateSpot(vehicle.type);
+
+        // Create vehicle entry
+        const vehicleId = uuidv4();
+        const entryTime = new Date();
+
+        const vehicleData = {
+            id: vehicleId,
+            plate: vehicle.plate.toUpperCase(),
+            type: vehicle.type,
+            model: vehicle.model,
+            color: vehicle.color,
+            ownerName: vehicle.ownerName,
+            ownerPhone: vehicle.ownerPhone || null,
+            entryTime: entryTime.toISOString(),
+            spot: spot,
+            status: 'parked'
+        };
+
+        // Insert vehicle
+        await vehiclesCollection.insertOne(vehicleData);
+
+        // Update parking spot
+        const spotsCollection = db.collection('parking_spots');
+        await spotsCollection.updateOne(
+            { id: spot },
+            {
+                $set: {
+                    isOccupied: true,
+                    vehicleId: vehicleId
+                }
+            }
+        );
+
+        // Log operation
+        const operationsCollection = db.collection('operations_history');
+        await operationsCollection.insertOne({
+            id: uuidv4(),
+            type: 'entry',
+            vehicleId: vehicleId,
+            plate: vehicle.plate.toUpperCase(),
+            spot: spot,
+            timestamp: entryTime.toISOString(),
+            data: vehicleData
+        });
+
+        res.json({
+            success: true,
+            message: `Veículo ${vehicle.plate.toUpperCase()} registrado com sucesso!`,
+            data: {
+                vehicleId: vehicleId,
+                spot: spot,
+                entryTime: entryTime.toLocaleTimeString('pt-BR', { 
+                    hour: '2-digit', 
+                    minute: '2-digit' 
+                })
+            }
+        });
+
+    } catch (error) {
+        console.error('Error in vehicle entry:', error);
+        if (error.message === 'Não há vagas disponíveis') {
+            return res.status(400).json({ detail: error.message });
+        }
+        res.status(500).json({ detail: `Erro interno: ${error.message}` });
+    }
+});
+
+// Get all parked vehicles
+app.get('/api/vehicles', async (req, res) => {
+    try {
+        const vehiclesCollection = db.collection('vehicles');
+        const vehicles = await vehiclesCollection.find({ status: 'parked' }).toArray();
+
+        const result = vehicles.map(vehicle => {
+            const entryTime = new Date(vehicle.entryTime);
+            return {
+                id: vehicle.id,
+                plate: vehicle.plate,
+                type: vehicle.type,
+                model: vehicle.model,
+                color: vehicle.color,
+                ownerName: vehicle.ownerName,
+                ownerPhone: vehicle.ownerPhone,
+                entryTime: entryTime.toLocaleTimeString('pt-BR', { 
+                    hour: '2-digit', 
+                    minute: '2-digit' 
+                }),
+                spot: vehicle.spot,
+                status: vehicle.status
+            };
+        });
+
+        res.json(result);
+
+    } catch (error) {
+        console.error('Error getting vehicles:', error);
+        res.status(500).json({ detail: `Erro ao buscar veículos: ${error.message}` });
+    }
+});
+
+// Search vehicles by plate or owner name
+app.get('/api/vehicles/search', async (req, res) => {
+    try {
+        const { plate, owner } = req.query;
+        const vehiclesCollection = db.collection('vehicles');
+        const query = { status: 'parked' };
+
+        if (plate) {
+            query.plate = { $regex: plate.toUpperCase(), $options: 'i' };
+        }
+
+        if (owner) {
+            query.ownerName = { $regex: owner, $options: 'i' };
+        }
+
+        const vehicles = await vehiclesCollection.find(query).toArray();
+
+        const result = vehicles.map(vehicle => {
+            const entryTime = new Date(vehicle.entryTime);
+            return {
+                id: vehicle.id,
+                plate: vehicle.plate,
+                type: vehicle.type,
+                model: vehicle.model,
+                color: vehicle.color,
+                ownerName: vehicle.ownerName,
+                ownerPhone: vehicle.ownerPhone,
+                entryTime: entryTime.toLocaleTimeString('pt-BR', { 
+                    hour: '2-digit', 
+                    minute: '2-digit' 
+                }),
+                spot: vehicle.spot,
+                status: vehicle.status
+            };
+        });
+
+        res.json({ success: true, data: result });
+
+    } catch (error) {
+        console.error('Error searching vehicles:', error);
+        res.status(500).json({ detail: `Erro ao buscar veículos: ${error.message}` });
+    }
+});
+
+// Process vehicle exit
+app.post('/api/vehicles/exit', async (req, res) => {
+    try {
+        // Validate request body
+        const { error, value } = vehicleExitSchema.validate(req.body);
+        if (error) {
+            return res.status(400).json({ detail: error.details[0].message });
+        }
+
+        const exitData = value;
+        const vehiclesCollection = db.collection('vehicles');
+        const vehicle = await vehiclesCollection.findOne({
+            id: exitData.vehicleId,
+            status: 'parked'
+        });
+
+        if (!vehicle) {
+            return res.status(404).json({ detail: 'Veículo não encontrado' });
+        }
+
+        const exitTime = new Date();
+        const entryTime = new Date(vehicle.entryTime);
+
+        // Calculate duration and fee (simplified)
+        const durationHours = (exitTime - entryTime) / (1000 * 60 * 60);
+        const fee = Math.max(5.0, durationHours * 3.0); // Minimum R$5, R$3 per hour
+
+        // Update vehicle status
+        await vehiclesCollection.updateOne(
+            { id: exitData.vehicleId },
+            {
+                $set: {
+                    status: 'exited',
+                    exitTime: exitTime.toISOString(),
+                    fee: fee,
+                    duration: durationHours
+                }
+            }
+        );
+
+        // Free parking spot
+        const spotsCollection = db.collection('parking_spots');
+        await spotsCollection.updateOne(
+            { id: vehicle.spot },
+            {
+                $set: {
+                    isOccupied: false,
+                    vehicleId: null
+                }
+            }
+        );
+
+        // Log operation
+        const operationsCollection = db.collection('operations_history');
+        await operationsCollection.insertOne({
+            id: uuidv4(),
+            type: 'exit',
+            vehicleId: exitData.vehicleId,
+            plate: vehicle.plate,
+            spot: vehicle.spot,
+            timestamp: exitTime.toISOString(),
+            data: {
+                entryTime: vehicle.entryTime,
+                exitTime: exitTime.toISOString(),
+                duration: durationHours,
+                fee: fee
+            }
+        });
+
+        res.json({
+            success: true,
+            message: `Saída processada para ${vehicle.plate}`,
+            data: {
+                plate: vehicle.plate,
+                spot: vehicle.spot,
+                duration: `${durationHours.toFixed(1)}h`,
+                fee: `R$ ${fee.toFixed(2)}`,
+                exitTime: exitTime.toLocaleTimeString('pt-BR', { 
+                    hour: '2-digit', 
+                    minute: '2-digit' 
+                })
+            }
+        });
+
+    } catch (error) {
+        console.error('Error processing vehicle exit:', error);
+        res.status(500).json({ detail: `Erro ao processar saída: ${error.message}` });
+    }
+});
+
+// Get all parking spots
+app.get('/api/spots', async (req, res) => {
+    try {
+        const spotsCollection = db.collection('parking_spots');
+        const spots = await spotsCollection.find({}, { projection: { _id: 0 } }).toArray();
+
+        res.json(spots);
+
+    } catch (error) {
+        console.error('Error getting parking spots:', error);
+        res.status(500).json({ detail: `Erro ao buscar vagas: ${error.message}` });
+    }
+});
+
+// Get dashboard statistics
+app.get('/api/dashboard/stats', async (req, res) => {
+    try {
+        const vehiclesCollection = db.collection('vehicles');
+        const spotsCollection = db.collection('parking_spots');
+
+        // Count parked vehicles
+        const totalCars = await vehiclesCollection.countDocuments({
+            status: 'parked',
+            type: 'car'
+        });
+
+        const totalMotorcycles = await vehiclesCollection.countDocuments({
+            status: 'parked',
+            type: 'motorcycle'
+        });
+
+        // Count available spots
+        const availableSpots = await spotsCollection.countDocuments({ isOccupied: false });
+
+        // Calculate today's revenue (simplified)
+        const todayStart = new Date();
+        todayStart.setHours(0, 0, 0, 0);
+        
+        const todayExits = await vehiclesCollection.find({
+            status: 'exited',
+            exitTime: { $gte: todayStart.toISOString() }
+        }).toArray();
+
+        const todayRevenue = todayExits.reduce((sum, exit) => sum + (exit.fee || 0), 0);
+
+        // Calculate occupancy rate
+        const totalSpots = 70; // 50 cars + 20 motorcycles
+        const occupiedSpots = totalSpots - availableSpots;
+        const occupancyRate = (occupiedSpots / totalSpots) * 100;
+
+        res.json({
+            totalCarsParked: totalCars,
+            totalMotorcyclesParked: totalMotorcycles,
+            availableSpots: availableSpots,
+            todayRevenue: todayRevenue,
+            occupancyRate: occupancyRate
+        });
+
+    } catch (error) {
+        console.error('Error getting dashboard stats:', error);
+        res.status(500).json({ detail: `Erro ao buscar estatísticas: ${error.message}` });
+    }
+});
+
+// Get monthly report data
+app.get('/api/reports/monthly', async (req, res) => {
+    try {
+        const operationsCollection = db.collection('operations_history');
+
+        // Get operations from last 30 days
+        const thirtyDaysAgo = new Date();
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+        thirtyDaysAgo.setHours(0, 0, 0, 0);
+
+        const operations = await operationsCollection.find({
+            timestamp: { $gte: thirtyDaysAgo.toISOString() }
+        }).toArray();
+
+        // Process data for charts
+        const dailyEntries = {};
+        const dailyRevenue = {};
+
+        operations.forEach(op => {
+            const opDate = new Date(op.timestamp);
+            const dayKey = opDate.toISOString().split('T')[0];
+
+            if (op.type === 'entry') {
+                dailyEntries[dayKey] = (dailyEntries[dayKey] || 0) + 1;
+            } else if (op.type === 'exit') {
+                const fee = op.data?.fee || 0;
+                dailyRevenue[dayKey] = (dailyRevenue[dayKey] || 0) + fee;
+            }
+        });
+
+        res.json({
+            success: true,
+            data: {
+                dailyEntries: dailyEntries,
+                dailyRevenue: dailyRevenue,
+                totalOperations: operations.length
+            }
+        });
+
+    } catch (error) {
+        console.error('Error generating monthly report:', error);
+        res.status(500).json({ detail: `Erro ao gerar relatório: ${error.message}` });
+    }
+});
+
+// Get operations history
+app.get('/api/history', async (req, res) => {
+    try {
+        const limit = parseInt(req.query.limit) || 50;
+        const operationsCollection = db.collection('operations_history');
+
+        const operations = await operationsCollection
+            .find({}, { projection: { _id: 0 } })
+            .sort({ timestamp: -1 })
+            .limit(limit)
+            .toArray();
+
+        // Format for frontend
+        const formattedOperations = operations.map(op => {
+            const opTime = new Date(op.timestamp);
+            return {
+                id: op.id,
+                type: op.type,
+                plate: op.plate,
+                spot: op.spot,
+                time: opTime.toLocaleDateString('pt-BR') + ' ' + 
+                      opTime.toLocaleTimeString('pt-BR', { 
+                          hour: '2-digit', 
+                          minute: '2-digit' 
+                      }),
+                timestamp: op.timestamp
+            };
+        });
+
+        res.json({
+            success: true,
+            data: formattedOperations
+        });
+
+    } catch (error) {
+        console.error('Error getting operations history:', error);
+        res.status(500).json({ detail: `Erro ao buscar histórico: ${error.message}` });
+    }
+});
+
+// Error handling middleware
+app.use((error, req, res, next) => {
+    console.error('Unhandled error:', error);
+    res.status(500).json({ detail: 'Erro interno do servidor' });
+});
+
+// Start server
+const PORT = process.env.PORT || 8001;
+
+async function startServer() {
+    await connectToMongoDB();
+    
+    app.listen(PORT, '0.0.0.0', () => {
+        console.log(`ParkSystem Pro API running on http://0.0.0.0:${PORT}`);
+    });
+}
+
+startServer().catch(error => {
+    console.error('Failed to start server:', error);
+    process.exit(1);
+});
