@@ -175,6 +175,9 @@ export function VehicleEntry({ onSuccess }: VehicleEntryProps) {
       const validation = validateBrazilianPlate(formattedValue);
       setPlateValidation(validation);
       setFormData(prev => ({ ...prev, [field]: formattedValue }));
+    } else if (field === 'ownerPhone') {
+      const formattedValue = formatPhoneInput(value);
+      setFormData(prev => ({ ...prev, [field]: formattedValue }));
     } else {
       setFormData(prev => ({ ...prev, [field]: value }));
     }
