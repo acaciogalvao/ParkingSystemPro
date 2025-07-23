@@ -30,7 +30,11 @@ const app = express();
 
 // Middleware
 app.use(cors({
-    origin: "*", // In production, specify actual origins
+    origin: [
+        "*",
+        "http://localhost:3000",
+        /\.preview\.emergentagent\.com$/
+    ],
     credentials: true,
     methods: ["*"],
     allowedHeaders: ["*"]
