@@ -19,6 +19,8 @@ async function connectToMongoDB() {
         await client.connect();
         db = client.db('parkingsystempro');
         console.log('Connected to MongoDB');
+        console.log('Using database: parkingsystempro');
+        console.log('MongoDB connection string:', MONGO_URL.replace(/\/\/.*@/, '//***:***@'));
         await initializeParkingSpots();
     } catch (error) {
         console.error('MongoDB connection error:', error);
