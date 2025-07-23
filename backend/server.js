@@ -624,7 +624,9 @@ app.get('/api/spots/with-duration', async (req, res) => {
                     const seconds = Math.floor((durationMs % (1000 * 60)) / 1000);
                     
                     const durationMinutes = durationMs / (1000 * 60);
-                    const estimatedFee = durationMinutes * 0.05; // R$0.05 per minute (R$3 per hour)
+                    // Cars: R$10/hour = R$0.1667/min, Motorcycles: R$7/hour = R$0.1167/min
+                    const ratePerMinute = vehicle.type === 'car' ? (10 / 60) : (7 / 60);
+                    const estimatedFee = durationMinutes * ratePerMinute;
                     
                     return {
                         ...spot,
