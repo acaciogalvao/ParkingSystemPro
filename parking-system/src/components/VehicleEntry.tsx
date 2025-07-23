@@ -133,13 +133,26 @@ export function VehicleEntry({ onSuccess }: VehicleEntryProps) {
     }
 
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8001';
       
-      // Success simulation
+      const response = await fetch(`${backendUrl}/api/vehicles/entry`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.detail || 'Erro ao registrar veículo');
+      }
+      
+      // Success
       setMessage({
         type: 'success',
-        text: `Veículo ${formData.plate} registrado! Vaga: ${formData.type === 'car' ? 'A-' : 'M-'}${Math.floor(Math.random() * 50) + 1}`
+        text: `Veículo ${formData.plate} registrado! Vaga: ${result.data.spot}`
       });
       
       // Reset form
@@ -162,7 +175,7 @@ export function VehicleEntry({ onSuccess }: VehicleEntryProps) {
     } catch (error) {
       setMessage({
         type: 'error',
-        text: 'Erro ao registrar veículo. Tente novamente.'
+        text: error.message || 'Erro ao registrar veículo. Tente novamente.'
       });
     } finally {
       setIsSubmitting(false);
