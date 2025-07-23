@@ -74,6 +74,127 @@ frontend:
         agent: "testing"
         comment: "✅ Navegação funcionando corretamente. Usuário consegue acessar página inicial e clicar na aba 'Entrada' para acessar o formulário de nova entrada de veículo. Formulário carrega corretamente com todos os campos visíveis."
 
+backend:
+  - task: "API Health Check Endpoint"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "✅ Health check endpoint funcionando corretamente. GET /api/health retorna status 'healthy' com timestamp. API respondendo em http://localhost:8001."
+
+  - task: "Validação de placas brasileiras no backend"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "✅ Validação de placas brasileiras funcionando perfeitamente. Aceita formato antigo (ABC-1234) e Mercosul (ABC1A12). Rejeita corretamente formatos inválidos com mensagens apropriadas. Função validate_brazilian_plate() implementada corretamente."
+
+  - task: "Registro de entrada de veículos"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "✅ Registro de entrada funcionando corretamente. POST /api/vehicles/entry aceita dados válidos, aloca vagas automaticamente (A-01 a A-50 para carros, M-01 a M-20 para motos), previne duplicatas e registra operações no histórico."
+
+  - task: "Listagem de veículos estacionados"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "✅ Listagem de veículos funcionando corretamente. GET /api/vehicles retorna lista completa de veículos estacionados com estrutura de dados válida incluindo id, placa, tipo, modelo, cor, proprietário, vaga e status."
+
+  - task: "Busca de veículos por placa e proprietário"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "✅ Busca de veículos funcionando corretamente. GET /api/vehicles/search aceita parâmetros 'plate' e 'owner', realiza busca case-insensitive com regex e retorna resultados filtrados adequadamente."
+
+  - task: "Processamento de saída de veículos"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "✅ Processamento de saída funcionando corretamente. POST /api/vehicles/exit calcula duração e taxa (mínimo R$5, R$3/hora), libera vaga, atualiza status do veículo e registra operação no histórico. Rejeita IDs inválidos adequadamente."
+
+  - task: "Gerenciamento de vagas de estacionamento"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "✅ Gerenciamento de vagas funcionando corretamente. GET /api/spots retorna 70 vagas (50 carros A-01 a A-50, 20 motos M-01 a M-20). Inicialização automática na startup, controle de ocupação e alocação automática funcionando."
+
+  - task: "Estatísticas do dashboard"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "✅ Estatísticas do dashboard funcionando corretamente. GET /api/dashboard/stats retorna contadores de carros/motos estacionados, vagas disponíveis, receita do dia e taxa de ocupação. Cálculos precisos e estrutura de dados válida."
+
+  - task: "Relatório mensal"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "✅ Relatório mensal funcionando corretamente. GET /api/reports/monthly gera dados de entradas diárias, receita diária e total de operações dos últimos 30 dias. Estrutura adequada para gráficos no frontend."
+
+  - task: "Histórico de operações"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "✅ Histórico de operações funcionando corretamente. GET /api/history retorna últimas 50 operações ordenadas por timestamp, com dados formatados para exibição (tipo, placa, vaga, data/hora)."
+
 metadata:
   created_by: "testing_agent"
   version: "1.0"
