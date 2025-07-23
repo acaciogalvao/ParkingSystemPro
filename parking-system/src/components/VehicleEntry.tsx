@@ -135,7 +135,7 @@ export function VehicleEntry({ onSuccess }: VehicleEntryProps) {
     try {
       const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8001';
       
-      const response = await fetch(`${backendUrl}/api/vehicles/entry`, {
+      const response = await fetch(`${backendUrl}/vehicles/entry`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
