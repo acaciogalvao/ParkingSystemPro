@@ -8,6 +8,35 @@ import { v4 as uuidv4 } from 'uuid';
 // Load environment variables
 dotenv.config();
 
+// Utility function to get Brazilian time
+function getBrazilianTime() {
+    const now = new Date();
+    // Convert to Brazilian timezone (UTC-3)
+    const brazilTime = new Date(now.getTime() - (3 * 60 * 60 * 1000));
+    return brazilTime;
+}
+
+function formatBrazilianTime(date, options = {}) {
+    const defaultOptions = {
+        timeZone: 'America/Sao_Paulo',
+        hour: '2-digit',
+        minute: '2-digit',
+        ...options
+    };
+    return date.toLocaleTimeString('pt-BR', defaultOptions);
+}
+
+function formatBrazilianDateTime(date) {
+    return date.toLocaleString('pt-BR', {
+        timeZone: 'America/Sao_Paulo',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+}
+
 // MongoDB connection
 const MONGO_URL = process.env.MONGO_URL || 'mongodb://localhost:27017/parksystem';
 const client = new MongoClient(MONGO_URL);
