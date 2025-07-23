@@ -103,7 +103,7 @@ class ParkSystemTester:
             {
                 "name": "Mercosul Format Motorcycle", 
                 "data": {
-                    "plate": "DEF2B34",
+                    "plate": "JKL3C45",
                     "type": "motorcycle",
                     "model": "Honda CB600",
                     "color": "Preto",
