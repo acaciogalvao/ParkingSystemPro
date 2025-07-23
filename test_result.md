@@ -92,3 +92,5 @@ agent_communication:
     message: "Testes de validação de placas concluídos. Funcionalidades principais funcionando corretamente, mas auto-formatação precisa ser corrigida. Detalhes: 5 de 6 funcionalidades testadas estão funcionando perfeitamente. Apenas a auto-formatação de placas não está adicionando hífen automaticamente durante a digitação."
   - agent: "setup_and_configuration"
     message: "✅ SISTEMA CONFIGURADO PARA RODAR EXTERNAMENTE - Sistema ParkSystem Pro está rodando localmente e acessível externamente. Dependências instaladas com yarn, servidor Vite rodando na porta 5173, interface funcional testada. URLs de acesso: Local http://localhost:5173 | Externo http://10.64.162.175:5173"
+  - agent: "development"
+    message: "✅ AUTO-FORMATAÇÃO DE PLACAS CORRIGIDA - Implementada lógica correta para inserir hífen apenas quando o 5º dígito for número (formato antigo ABC-1234). Formato Mercosul (ABC1A12) não recebe hífen. Sistema testado e funcionando corretamente. URL externa funcionando: https://4c1294fe-3b3f-4f52-9341-2487272b2d77.preview.emergentagent.com"
