@@ -83,6 +83,26 @@ const formatPlateInput = (value: string): string => {
   return cleaned;
 };
 
+// Formatação automática de telefone durante digitação
+const formatPhoneInput = (value: string): string => {
+  // Remove tudo que não for número
+  const numbersOnly = value.replace(/\D/g, '');
+  
+  // Limita a 11 dígitos (DDD + 9 dígitos)
+  const limitedNumbers = numbersOnly.slice(0, 11);
+  
+  // Aplica a máscara baseada na quantidade de dígitos
+  if (limitedNumbers.length <= 2) {
+    return `(${limitedNumbers}`;
+  } else if (limitedNumbers.length <= 3) {
+    return `(${limitedNumbers.slice(0, 2)})${limitedNumbers.slice(2)}`;
+  } else if (limitedNumbers.length <= 8) {
+    return `(${limitedNumbers.slice(0, 2)})${limitedNumbers.slice(2, 3)}${limitedNumbers.slice(3)}`;
+  } else {
+    return `(${limitedNumbers.slice(0, 2)})${limitedNumbers.slice(2, 7)}-${limitedNumbers.slice(7)}`;
+  }
+};
+
 export function VehicleEntry({ onSuccess }: VehicleEntryProps) {
   const [formData, setFormData] = useState({
     plate: "",
