@@ -485,6 +485,79 @@ app.post('/api/vehicles/exit', async (req, res) => {
     }
 });
 
+// Update vehicle information
+app.put('/api/vehicles/:vehicleId', async (req, res) => {
+    try {
+        const { vehicleId } = req.params;
+        const updateData = req.body;
+
+        // Validate required fields
+        const allowedFields = ['ownerName', 'ownerPhone', 'model', 'color'];
+        const updateFields = {};
+        
+        for (const field of allowedFields) {
+            if (updateData[field] !== undefined) {
+                updateFields[field] = updateData[field];
+            }
+        }
+
+        if (Object.keys(updateFields).length === 0) {
+            return res.status(400).json({ detail: 'Nenhum campo válido fornecido para atualização' });
+        }
+
+        // Check if vehicle exists and is parked
+        const vehiclesCollection = db.collection('vehicles');
+        const vehicle = await vehiclesCollection.findOne({
+            id: vehicleId,
+            status: 'parked'
+        });
+
+        if (!vehicle) {
+            return res.status(404).json({ detail: 'Veículo não encontrado' });
+        }
+
+        // Update vehicle
+        await vehiclesCollection.updateOne(
+            { id: vehicleId },
+            { $set: updateFields }
+        );
+
+        // Log operation
+        const operationsCollection = db.collection('operations_history');
+        await operationsCollection.insertOne({
+            id: uuidv4(),
+            type: 'update',
+            vehicleId: vehicleId,
+            plate: vehicle.plate,
+            spot: vehicle.spot,
+            timestamp: new Date().toISOString(),
+            data: {
+                updatedFields: updateFields,
+                previousData: {
+                    ownerName: vehicle.ownerName,
+                    ownerPhone: vehicle.ownerPhone,
+                    model: vehicle.model,
+                    color: vehicle.color
+                }
+            }
+        });
+
+        res.json({
+            success: true,
+            message: `Dados do veículo ${vehicle.plate} atualizados com sucesso!`,
+            data: {
+                vehicleId: vehicleId,
+                plate: vehicle.plate,
+                updatedFields: updateFields
+            }
+        });
+
+    } catch (error) {
+        console.error('Error updating vehicle:', error);
+        res.status(500).json({ detail: `Erro ao atualizar veículo: ${error.message}` });
+    }
+});
+
 // Synchronize parking spots with actual parked vehicles
 app.post('/api/spots/sync', async (req, res) => {
     try {
