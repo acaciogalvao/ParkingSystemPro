@@ -426,7 +426,7 @@ export default function ParkingSystem() {
               // Refresh dashboard data after successful entry
               setTimeout(async () => {
                 try {
-                  const response = await fetch(`${backendUrl}/api/dashboard/stats`);
+                  const response = await fetch(`${backendUrl}/dashboard/stats`);
                   if (response.ok) {
                     const data = await response.json();
                     setStats(data);
