@@ -117,6 +117,8 @@ async function initializeParkingSpots() {
     // Check if spots already exist
     const count = await spotsCollection.countDocuments();
     if (count > 0) {
+        // Synchronize existing spots with vehicles
+        await synchronizeParkingSpots();
         return;
     }
 
@@ -146,6 +148,65 @@ async function initializeParkingSpots() {
 
     await spotsCollection.insertMany(spots);
     console.log('Parking spots initialized');
+}
+
+async function synchronizeParkingSpots() {
+    const spotsCollection = db.collection('parking_spots');
+    const vehiclesCollection = db.collection('vehicles');
+
+    console.log('Starting parking spots synchronization...');
+
+    try {
+        // Get all currently parked vehicles
+        const parkedVehicles = await vehiclesCollection.find({ status: 'parked' }).toArray();
+        const occupiedSpots = parkedVehicles.map(vehicle => ({
+            spotId: vehicle.spot,
+            vehicleId: vehicle.id
+        }));
+
+        // First, mark all spots as available
+        await spotsCollection.updateMany(
+            {},
+            {
+                $set: {
+                    isOccupied: false,
+                    vehicleId: null
+                }
+            }
+        );
+
+        // Then mark only the spots that actually have parked vehicles
+        for (const occupiedSpot of occupiedSpots) {
+            await spotsCollection.updateOne(
+                { id: occupiedSpot.spotId },
+                {
+                    $set: {
+                        isOccupied: true,
+                        vehicleId: occupiedSpot.vehicleId
+                    }
+                }
+            );
+        }
+
+        console.log(`Synchronized ${occupiedSpots.length} occupied spots with parked vehicles`);
+        
+        // Log any inconsistencies found
+        const totalSpots = await spotsCollection.countDocuments();
+        const occupiedCount = await spotsCollection.countDocuments({ isOccupied: true });
+        const parkedCount = parkedVehicles.length;
+        
+        console.log(`Total spots: ${totalSpots}, Occupied: ${occupiedCount}, Parked vehicles: ${parkedCount}`);
+        
+        if (occupiedCount !== parkedCount) {
+            console.warn(`Warning: Inconsistency detected! Occupied spots: ${occupiedCount}, Parked vehicles: ${parkedCount}`);
+        } else {
+            console.log('✅ Parking spots and vehicles are now synchronized');
+        }
+
+    } catch (error) {
+        console.error('Error synchronizing parking spots:', error);
+        throw error;
+    }
 }
 
 // API Routes
