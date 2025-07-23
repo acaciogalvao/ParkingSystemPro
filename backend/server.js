@@ -483,6 +483,31 @@ app.post('/api/vehicles/exit', async (req, res) => {
     }
 });
 
+// Synchronize parking spots with actual parked vehicles
+app.post('/api/spots/sync', async (req, res) => {
+    try {
+        await synchronizeParkingSpots();
+        
+        const spotsCollection = db.collection('parking_spots');
+        const occupiedCount = await spotsCollection.countDocuments({ isOccupied: true });
+        const availableCount = await spotsCollection.countDocuments({ isOccupied: false });
+        
+        res.json({
+            success: true,
+            message: 'Parking spots synchronized successfully',
+            data: {
+                occupiedSpots: occupiedCount,
+                availableSpots: availableCount,
+                totalSpots: occupiedCount + availableCount
+            }
+        });
+
+    } catch (error) {
+        console.error('Error synchronizing spots:', error);
+        res.status(500).json({ detail: `Erro ao sincronizar vagas: ${error.message}` });
+    }
+});
+
 // Get all parking spots
 app.get('/api/spots', async (req, res) => {
     try {
