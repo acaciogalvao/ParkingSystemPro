@@ -566,7 +566,7 @@ app.get('/api/vehicles/with-duration', async (req, res) => {
         
         const vehiclesWithDuration = vehicles.map(vehicle => {
             const entryTime = new Date(vehicle.entryTime);
-            const currentTime = new Date();
+            const currentTime = getBrazilianTime();
             const durationMs = currentTime - entryTime;
             
             const hours = Math.floor(durationMs / (1000 * 60 * 60));
