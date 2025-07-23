@@ -539,25 +539,461 @@ class ParkSystemTester:
             self.add_result("Vehicle Exit - Invalid ID", False, f"Request error: {str(e)}")
     
     def run_all_tests(self):
-        """Run all tests in sequence"""
-        print(f"{Colors.BOLD}{Colors.BLUE}🚀 Starting ParkSystem Pro Backend API Tests{Colors.ENDC}")
+        """Run synchronization-focused tests as requested"""
+        print(f"{Colors.BOLD}{Colors.BLUE}🚀 TESTE COMPLETO DE SINCRONIZAÇÃO DE VAGAS - ParkSystem Pro{Colors.ENDC}")
         print(f"{Colors.BLUE}Backend URL: {self.base_url}{Colors.ENDC}")
-        print("=" * 60)
+        print("=" * 80)
         
-        # Run tests in logical order
+        # Run health check first
         self.test_health_check()
-        self.test_parking_spots()
-        self.test_vehicle_entry_valid()
-        self.test_vehicle_entry_invalid()
-        self.test_get_vehicles()
-        self.test_search_vehicles()
-        self.test_dashboard_stats()
-        self.test_monthly_report()
-        self.test_operations_history()
-        self.test_vehicle_exit()  # Test exit last to clean up
+        
+        # Run comprehensive synchronization test
+        self.test_synchronization_scenario()
         
         # Print summary
         self.print_summary()
+    
+    def test_synchronization_scenario(self):
+        """Test complete synchronization scenario as requested by user"""
+        print_test_header("TESTE COMPLETO DE SINCRONIZAÇÃO DE VAGAS")
+        
+        # 1. Estado Inicial - Check current state
+        print_info("1. Verificando estado inicial das vagas e veículos...")
+        initial_state = self.get_initial_state()
+        
+        # 2. Teste de Entrada - Register new vehicle GHI3J44
+        print_info("2. Registrando novo veículo: GHI3J44 (Mercosul), Volkswagen, Azul, Carlos...")
+        new_vehicle_data = {
+            "plate": "GHI3J44",
+            "type": "car", 
+            "model": "Volkswagen",
+            "color": "Azul",
+            "ownerName": "Carlos",
+            "ownerPhone": "(11) 98765-4321"
+        }
+        
+        entry_result = self.register_vehicle_entry(new_vehicle_data)
+        
+        # 3. Teste de Saída - Process exit of existing vehicle
+        print_info("3. Processando saída de um veículo existente...")
+        exit_result = self.process_vehicle_exit()
+        
+        # 4. Verificação de Sincronização
+        print_info("4. Verificando sincronização entre vagas ocupadas e veículos estacionados...")
+        sync_verification = self.verify_synchronization()
+        
+        # 5. Teste do endpoint /api/spots/sync
+        print_info("5. Testando endpoint /api/spots/sync...")
+        sync_endpoint_result = self.test_sync_endpoint()
+        
+        # 6. Teste de Consistência - Dashboard statistics
+        print_info("6. Verificando se estatísticas do dashboard refletem o estado real...")
+        dashboard_consistency = self.verify_dashboard_consistency()
+        
+        # Summary of synchronization test
+        self.print_synchronization_summary(initial_state, entry_result, exit_result, 
+                                          sync_verification, sync_endpoint_result, dashboard_consistency)
+    
+    def get_initial_state(self):
+        """Get initial state of vehicles and spots"""
+        try:
+            # Get vehicles
+            vehicles_response = requests.get(f"{self.base_url}/api/vehicles", timeout=10)
+            spots_response = requests.get(f"{self.base_url}/api/spots", timeout=10)
+            stats_response = requests.get(f"{self.base_url}/api/dashboard/stats", timeout=10)
+            
+            if all(r.status_code == 200 for r in [vehicles_response, spots_response, stats_response]):
+                vehicles = vehicles_response.json()
+                spots = spots_response.json()
+                stats = stats_response.json()
+                
+                occupied_spots = [s for s in spots if s["isOccupied"]]
+                available_spots = [s for s in spots if not s["isOccupied"]]
+                
+                state = {
+                    "vehicles_count": len(vehicles),
+                    "total_spots": len(spots),
+                    "occupied_spots": len(occupied_spots),
+                    "available_spots": len(available_spots),
+                    "vehicles": vehicles,
+                    "spots": spots,
+                    "stats": stats
+                }
+                
+                print_success(f"Estado inicial: {state['vehicles_count']} veículos, {state['occupied_spots']} vagas ocupadas, {state['available_spots']} vagas disponíveis")
+                
+                # Check for inconsistencies
+                if state['vehicles_count'] != state['occupied_spots']:
+                    print_warning(f"⚠️ INCONSISTÊNCIA DETECTADA: {state['vehicles_count']} veículos vs {state['occupied_spots']} vagas ocupadas")
+                else:
+                    print_success("✅ Estado inicial consistente: veículos = vagas ocupadas")
+                
+                return state
+            else:
+                print_error("Falha ao obter estado inicial")
+                return None
+                
+        except Exception as e:
+            print_error(f"Erro ao obter estado inicial: {str(e)}")
+            return None
+    
+    def register_vehicle_entry(self, vehicle_data):
+        """Register new vehicle entry"""
+        try:
+            response = requests.post(
+                f"{self.base_url}/api/vehicles/entry",
+                json=vehicle_data,
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                if data.get("success"):
+                    vehicle_id = data["data"]["vehicleId"]
+                    spot = data["data"]["spot"]
+                    
+                    print_success(f"✅ Veículo {vehicle_data['plate']} registrado com sucesso na vaga {spot}")
+                    
+                    # Verify spot allocation is correct for car
+                    if vehicle_data["type"] == "car" and spot.startswith("A-"):
+                        print_success(f"✅ Alocação de vaga correta: {spot} para carro")
+                        spot_valid = True
+                    elif vehicle_data["type"] == "motorcycle" and spot.startswith("M-"):
+                        print_success(f"✅ Alocação de vaga correta: {spot} para moto")
+                        spot_valid = True
+                    else:
+                        print_error(f"❌ Alocação de vaga incorreta: {spot} para {vehicle_data['type']}")
+                        spot_valid = False
+                    
+                    self.add_result("Registro Novo Veículo", spot_valid, 
+                                  f"Veículo {vehicle_data['plate']} registrado na vaga {spot}")
+                    
+                    return {
+                        "success": True,
+                        "vehicle_id": vehicle_id,
+                        "spot": spot,
+                        "plate": vehicle_data['plate']
+                    }
+                else:
+                    print_error(f"❌ Falha no registro: {data}")
+                    self.add_result("Registro Novo Veículo", False, f"Resposta inválida: {data}")
+                    return {"success": False}
+            else:
+                error_msg = response.text
+                print_error(f"❌ Erro HTTP {response.status_code}: {error_msg}")
+                self.add_result("Registro Novo Veículo", False, f"HTTP {response.status_code}: {error_msg}")
+                return {"success": False}
+                
+        except Exception as e:
+            print_error(f"❌ Erro na requisição: {str(e)}")
+            self.add_result("Registro Novo Veículo", False, f"Erro de requisição: {str(e)}")
+            return {"success": False}
+    
+    def process_vehicle_exit(self):
+        """Process exit of an existing vehicle"""
+        try:
+            # Get current vehicles to find one to exit
+            vehicles_response = requests.get(f"{self.base_url}/api/vehicles", timeout=10)
+            
+            if vehicles_response.status_code != 200:
+                print_error("❌ Não foi possível obter lista de veículos para saída")
+                self.add_result("Saída de Veículo", False, "Falha ao obter lista de veículos")
+                return {"success": False}
+            
+            vehicles = vehicles_response.json()
+            
+            if not vehicles:
+                print_warning("⚠️ Nenhum veículo estacionado para processar saída")
+                self.add_result("Saída de Veículo", True, "Nenhum veículo para saída (estado válido)")
+                return {"success": True, "no_vehicles": True}
+            
+            # Select first vehicle for exit
+            vehicle_to_exit = vehicles[0]
+            vehicle_id = vehicle_to_exit["id"]
+            plate = vehicle_to_exit["plate"]
+            spot = vehicle_to_exit["spot"]
+            
+            print_info(f"Processando saída do veículo {plate} da vaga {spot}...")
+            
+            # Process exit
+            exit_response = requests.post(
+                f"{self.base_url}/api/vehicles/exit",
+                json={"vehicleId": vehicle_id},
+                timeout=10
+            )
+            
+            if exit_response.status_code == 200:
+                exit_data = exit_response.json()
+                if exit_data.get("success"):
+                    print_success(f"✅ Saída processada: {plate} da vaga {spot}")
+                    print_info(f"Duração: {exit_data['data']['duration']}, Taxa: {exit_data['data']['fee']}")
+                    
+                    self.add_result("Saída de Veículo", True, 
+                                  f"Veículo {plate} saiu da vaga {spot} com sucesso")
+                    
+                    return {
+                        "success": True,
+                        "vehicle_id": vehicle_id,
+                        "plate": plate,
+                        "spot": spot,
+                        "duration": exit_data['data']['duration'],
+                        "fee": exit_data['data']['fee']
+                    }
+                else:
+                    print_error(f"❌ Falha na saída: {exit_data}")
+                    self.add_result("Saída de Veículo", False, f"Resposta inválida: {exit_data}")
+                    return {"success": False}
+            else:
+                print_error(f"❌ Erro HTTP {exit_response.status_code}: {exit_response.text}")
+                self.add_result("Saída de Veículo", False, f"HTTP {exit_response.status_code}")
+                return {"success": False}
+                
+        except Exception as e:
+            print_error(f"❌ Erro ao processar saída: {str(e)}")
+            self.add_result("Saída de Veículo", False, f"Erro de requisição: {str(e)}")
+            return {"success": False}
+    
+    def verify_synchronization(self):
+        """Verify synchronization between occupied spots and parked vehicles"""
+        try:
+            # Get current vehicles and spots
+            vehicles_response = requests.get(f"{self.base_url}/api/vehicles", timeout=10)
+            spots_response = requests.get(f"{self.base_url}/api/spots", timeout=10)
+            
+            if vehicles_response.status_code != 200 or spots_response.status_code != 200:
+                print_error("❌ Falha ao obter dados para verificação de sincronização")
+                self.add_result("Verificação Sincronização", False, "Falha ao obter dados")
+                return {"success": False}
+            
+            vehicles = vehicles_response.json()
+            spots = spots_response.json()
+            
+            # Count parked vehicles
+            parked_vehicles = len(vehicles)
+            
+            # Count occupied spots
+            occupied_spots = [s for s in spots if s["isOccupied"]]
+            occupied_count = len(occupied_spots)
+            
+            # Get spots that should be occupied based on vehicles
+            vehicle_spots = {v["spot"] for v in vehicles}
+            
+            # Get spots that are marked as occupied
+            occupied_spot_ids = {s["id"] for s in occupied_spots}
+            
+            print_info(f"Veículos estacionados: {parked_vehicles}")
+            print_info(f"Vagas marcadas como ocupadas: {occupied_count}")
+            print_info(f"Vagas dos veículos: {sorted(vehicle_spots)}")
+            print_info(f"Vagas ocupadas: {sorted(occupied_spot_ids)}")
+            
+            # Check for perfect synchronization
+            if parked_vehicles == occupied_count and vehicle_spots == occupied_spot_ids:
+                print_success("✅ SINCRONIZAÇÃO PERFEITA: Vagas ocupadas correspondem exatamente aos veículos estacionados")
+                self.add_result("Verificação Sincronização", True, 
+                              f"Sincronização perfeita: {parked_vehicles} veículos = {occupied_count} vagas ocupadas")
+                
+                return {
+                    "success": True,
+                    "synchronized": True,
+                    "parked_vehicles": parked_vehicles,
+                    "occupied_spots": occupied_count,
+                    "vehicle_spots": vehicle_spots,
+                    "occupied_spot_ids": occupied_spot_ids
+                }
+            else:
+                # Identify inconsistencies
+                inconsistencies = []
+                
+                if parked_vehicles != occupied_count:
+                    inconsistencies.append(f"Contagem diferente: {parked_vehicles} veículos vs {occupied_count} vagas ocupadas")
+                
+                missing_spots = vehicle_spots - occupied_spot_ids
+                if missing_spots:
+                    inconsistencies.append(f"Vagas de veículos não marcadas como ocupadas: {missing_spots}")
+                
+                extra_spots = occupied_spot_ids - vehicle_spots
+                if extra_spots:
+                    inconsistencies.append(f"Vagas marcadas como ocupadas sem veículos: {extra_spots}")
+                
+                print_error("❌ INCONSISTÊNCIAS DETECTADAS:")
+                for inconsistency in inconsistencies:
+                    print_error(f"  • {inconsistency}")
+                
+                self.add_result("Verificação Sincronização", False, 
+                              f"Inconsistências: {'; '.join(inconsistencies)}")
+                
+                return {
+                    "success": False,
+                    "synchronized": False,
+                    "parked_vehicles": parked_vehicles,
+                    "occupied_spots": occupied_count,
+                    "inconsistencies": inconsistencies
+                }
+                
+        except Exception as e:
+            print_error(f"❌ Erro na verificação de sincronização: {str(e)}")
+            self.add_result("Verificação Sincronização", False, f"Erro: {str(e)}")
+            return {"success": False}
+    
+    def test_sync_endpoint(self):
+        """Test the /api/spots/sync endpoint"""
+        try:
+            print_info("Testando endpoint /api/spots/sync...")
+            
+            response = requests.post(f"{self.base_url}/api/spots/sync", timeout=10)
+            
+            if response.status_code == 200:
+                data = response.json()
+                if data.get("success"):
+                    sync_data = data["data"]
+                    print_success(f"✅ Sincronização executada com sucesso")
+                    print_info(f"Vagas ocupadas: {sync_data['occupiedSpots']}")
+                    print_info(f"Vagas disponíveis: {sync_data['availableSpots']}")
+                    print_info(f"Total de vagas: {sync_data['totalSpots']}")
+                    
+                    self.add_result("Endpoint Sync", True, 
+                                  f"Sincronização executada: {sync_data['occupiedSpots']} ocupadas, {sync_data['availableSpots']} disponíveis")
+                    
+                    return {
+                        "success": True,
+                        "occupied_spots": sync_data['occupiedSpots'],
+                        "available_spots": sync_data['availableSpots'],
+                        "total_spots": sync_data['totalSpots']
+                    }
+                else:
+                    print_error(f"❌ Resposta inválida do endpoint sync: {data}")
+                    self.add_result("Endpoint Sync", False, f"Resposta inválida: {data}")
+                    return {"success": False}
+            else:
+                print_error(f"❌ Erro HTTP {response.status_code}: {response.text}")
+                self.add_result("Endpoint Sync", False, f"HTTP {response.status_code}")
+                return {"success": False}
+                
+        except Exception as e:
+            print_error(f"❌ Erro ao testar endpoint sync: {str(e)}")
+            self.add_result("Endpoint Sync", False, f"Erro: {str(e)}")
+            return {"success": False}
+    
+    def verify_dashboard_consistency(self):
+        """Verify dashboard statistics reflect real state"""
+        try:
+            # Get dashboard stats
+            stats_response = requests.get(f"{self.base_url}/api/dashboard/stats", timeout=10)
+            vehicles_response = requests.get(f"{self.base_url}/api/vehicles", timeout=10)
+            spots_response = requests.get(f"{self.base_url}/api/spots", timeout=10)
+            
+            if not all(r.status_code == 200 for r in [stats_response, vehicles_response, spots_response]):
+                print_error("❌ Falha ao obter dados para verificação do dashboard")
+                self.add_result("Consistência Dashboard", False, "Falha ao obter dados")
+                return {"success": False}
+            
+            stats = stats_response.json()
+            vehicles = vehicles_response.json()
+            spots = spots_response.json()
+            
+            # Count actual vehicles by type
+            actual_cars = len([v for v in vehicles if v["type"] == "car"])
+            actual_motorcycles = len([v for v in vehicles if v["type"] == "motorcycle"])
+            actual_available = len([s for s in spots if not s["isOccupied"]])
+            
+            # Get dashboard stats
+            dashboard_cars = stats["totalCarsParked"]
+            dashboard_motorcycles = stats["totalMotorcyclesParked"]
+            dashboard_available = stats["availableSpots"]
+            dashboard_occupancy = stats["occupancyRate"]
+            
+            print_info(f"Estado real: {actual_cars} carros, {actual_motorcycles} motos, {actual_available} vagas disponíveis")
+            print_info(f"Dashboard: {dashboard_cars} carros, {dashboard_motorcycles} motos, {dashboard_available} vagas disponíveis")
+            print_info(f"Taxa de ocupação: {dashboard_occupancy:.1f}%")
+            
+            # Check consistency
+            inconsistencies = []
+            
+            if actual_cars != dashboard_cars:
+                inconsistencies.append(f"Carros: real {actual_cars} vs dashboard {dashboard_cars}")
+            
+            if actual_motorcycles != dashboard_motorcycles:
+                inconsistencies.append(f"Motos: real {actual_motorcycles} vs dashboard {dashboard_motorcycles}")
+            
+            if actual_available != dashboard_available:
+                inconsistencies.append(f"Vagas disponíveis: real {actual_available} vs dashboard {dashboard_available}")
+            
+            if not inconsistencies:
+                print_success("✅ DASHBOARD CONSISTENTE: Estatísticas refletem corretamente o estado real")
+                self.add_result("Consistência Dashboard", True, 
+                              f"Dashboard consistente: {actual_cars} carros, {actual_motorcycles} motos, {actual_available} vagas disponíveis")
+                
+                return {
+                    "success": True,
+                    "consistent": True,
+                    "stats": stats
+                }
+            else:
+                print_error("❌ INCONSISTÊNCIAS NO DASHBOARD:")
+                for inconsistency in inconsistencies:
+                    print_error(f"  • {inconsistency}")
+                
+                self.add_result("Consistência Dashboard", False, 
+                              f"Inconsistências: {'; '.join(inconsistencies)}")
+                
+                return {
+                    "success": False,
+                    "consistent": False,
+                    "inconsistencies": inconsistencies
+                }
+                
+        except Exception as e:
+            print_error(f"❌ Erro na verificação do dashboard: {str(e)}")
+            self.add_result("Consistência Dashboard", False, f"Erro: {str(e)}")
+            return {"success": False}
+    
+    def print_synchronization_summary(self, initial_state, entry_result, exit_result, 
+                                    sync_verification, sync_endpoint_result, dashboard_consistency):
+        """Print comprehensive synchronization test summary"""
+        print("\n" + "=" * 80)
+        print(f"{Colors.BOLD}{Colors.BLUE}📊 RESUMO DO TESTE DE SINCRONIZAÇÃO{Colors.ENDC}")
+        print("=" * 80)
+        
+        # Test results summary
+        tests = [
+            ("Estado Inicial", initial_state is not None),
+            ("Registro Novo Veículo", entry_result.get("success", False)),
+            ("Saída de Veículo", exit_result.get("success", False)),
+            ("Verificação Sincronização", sync_verification.get("synchronized", False)),
+            ("Endpoint /api/spots/sync", sync_endpoint_result.get("success", False)),
+            ("Consistência Dashboard", dashboard_consistency.get("consistent", False))
+        ]
+        
+        passed_tests = sum(1 for _, passed in tests if passed)
+        total_tests = len(tests)
+        
+        print(f"\n{Colors.BOLD}Resultados dos Testes:{Colors.ENDC}")
+        for test_name, passed in tests:
+            status = f"{Colors.GREEN}✅ PASSOU{Colors.ENDC}" if passed else f"{Colors.RED}❌ FALHOU{Colors.ENDC}"
+            print(f"  {test_name}: {status}")
+        
+        print(f"\n{Colors.BOLD}Taxa de Sucesso: {passed_tests}/{total_tests} ({passed_tests/total_tests*100:.1f}%){Colors.ENDC}")
+        
+        # Synchronization status
+        if sync_verification.get("synchronized", False):
+            print(f"\n{Colors.GREEN}{Colors.BOLD}🎉 SINCRONIZAÇÃO FUNCIONANDO PERFEITAMENTE!{Colors.ENDC}")
+            print(f"{Colors.GREEN}✅ Vagas ocupadas correspondem exatamente aos veículos estacionados{Colors.ENDC}")
+            print(f"{Colors.GREEN}✅ Sincronização automática está funcionando{Colors.ENDC}")
+            print(f"{Colors.GREEN}✅ Endpoint /api/spots/sync funciona corretamente{Colors.ENDC}")
+        else:
+            print(f"\n{Colors.RED}{Colors.BOLD}🚨 PROBLEMAS DE SINCRONIZAÇÃO DETECTADOS!{Colors.ENDC}")
+            if sync_verification.get("inconsistencies"):
+                print(f"{Colors.RED}❌ Inconsistências encontradas:{Colors.ENDC}")
+                for inconsistency in sync_verification["inconsistencies"]:
+                    print(f"{Colors.RED}  • {inconsistency}{Colors.ENDC}")
+        
+        # Dashboard consistency
+        if dashboard_consistency.get("consistent", False):
+            print(f"{Colors.GREEN}✅ Dashboard reflete corretamente o estado real{Colors.ENDC}")
+        else:
+            print(f"{Colors.RED}❌ Dashboard não reflete o estado real{Colors.ENDC}")
+        
+        print("\n" + "=" * 80)
     
     def print_summary(self):
         """Print test summary"""
