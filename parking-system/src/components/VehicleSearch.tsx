@@ -8,17 +8,16 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Car, Bike, Search, Clock, DollarSign, LogOut } from "lucide-react";
 
 interface Vehicle {
-  id: number;
+  id: string;
   plate: string;
   type: 'car' | 'motorcycle';
   model: string;
   color: string;
   ownerName: string;
-  ownerPhone: string;
+  ownerPhone?: string;
   entryTime: string;
   spot: string;
-  duration: string;
-  amount: number;
+  status: string;
 }
 
 export function VehicleSearch() {
