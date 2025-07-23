@@ -70,15 +70,23 @@ pip install -r requirements.txt
 
 #### c) Configurar variáveis de ambiente
 Crie o arquivo `backend/.env`:
+
+**Para este projeto específico (usando MongoDB Atlas):**
+```env
+MONGO_URL="mongodb+srv://parkingsystempro:parkingsystempro271182@parkingsystempro.q2hda0p.mongodb.net/?retryWrites=true&w=majority&appName=parkingsystempro"
+DB_NAME="parkingsystempro"
+```
+
+**OU para MongoDB local:**
 ```env
 MONGO_URL=mongodb://localhost:27017
 DB_NAME=test_database
 ```
 
-**Se usando MongoDB Atlas:**
+**OU se usando outro MongoDB Atlas:**
 ```env
 MONGO_URL=mongodb+srv://username:password@cluster.mongodb.net/
-DB_NAME=test_database
+DB_NAME=seu_database
 ```
 
 ### 3. Configuração do Frontend
