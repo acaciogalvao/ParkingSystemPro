@@ -272,6 +272,14 @@ export function VehicleSearch() {
                               <span className="text-gray-600">Entrada:</span>
                               <span className="font-medium">{selectedVehicle.entryTime}</span>
                             </div>
+                            {selectedVehicle.entryTimestamp && (
+                              <div className="flex justify-between items-center bg-green-50 p-2 rounded">
+                                <span className="text-gray-600">Tempo permanência:</span>
+                                <div className="font-medium text-green-600">
+                                  <Timer entryTime={selectedVehicle.entryTimestamp} showFee={true} />
+                                </div>
+                              </div>
+                            )}
                             <div className="flex justify-between">
                               <span className="text-gray-600">Tipo:</span>
                               <span className="font-medium">
