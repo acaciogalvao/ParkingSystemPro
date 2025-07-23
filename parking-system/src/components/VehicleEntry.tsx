@@ -57,13 +57,26 @@ const formatPlateInput = (value: string): string => {
   }
   
   // Auto-formatação para formato antigo: ABC1234 -> ABC-1234
-  // Se tem 3 letras seguidas de números (sem hífen), adicionar hífen
-  if (cleaned.length >= 4 && /^[A-Z]{3}[\d]/.test(cleaned)) {
-    // Verificar se ainda não é Mercosul (que tem padrão ABC1A12)
-    const isMercosul = /^[A-Z]{3}\d[A-Z]/.test(cleaned);
-    if (!isMercosul) {
-      // É formato antigo - adicionar hífen após as 3 primeiras letras
-      return cleaned.slice(0, 3) + '-' + cleaned.slice(3);
+  // Inserir hífen apenas se o 5º caractere for um número
+  if (cleaned.length >= 4) {
+    // Verifica se os primeiros 3 caracteres são letras
+    const first3 = cleaned.slice(0, 3);
+    const fourth = cleaned.slice(3, 4);
+    const fifth = cleaned.slice(4, 5);
+    
+    if (/^[A-Z]{3}$/.test(first3) && /^\d$/.test(fourth)) {
+      // Se o 5º caractere existir e for um número, é formato antigo - adicionar hífen
+      if (fifth && /^\d$/.test(fifth)) {
+        return first3 + '-' + cleaned.slice(3);
+      }
+      // Se ainda não digitou o 5º caractere, aguardar
+      else if (!fifth) {
+        return cleaned;
+      }
+      // Se o 5º caractere for letra, é Mercosul - não adicionar hífen
+      else {
+        return cleaned;
+      }
     }
   }
   
