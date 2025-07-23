@@ -528,6 +528,9 @@ app.get('/api/spots', async (req, res) => {
 // Get dashboard statistics
 app.get('/api/dashboard/stats', async (req, res) => {
     try {
+        // Auto-sync spots with vehicles for accurate statistics
+        await synchronizeParkingSpots();
+        
         const vehiclesCollection = db.collection('vehicles');
         const spotsCollection = db.collection('parking_spots');
 
