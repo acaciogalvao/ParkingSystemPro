@@ -52,7 +52,7 @@ export function VehicleSearch() {
     if (!searchTerm.trim()) {
       // If no search term, fetch all vehicles
       try {
-        const response = await fetch(`${backendUrl}/api/vehicles`);
+        const response = await fetch(`${backendUrl}/vehicles`);
         if (response.ok) {
           const data = await response.json();
           setVehicles(data);
