@@ -404,7 +404,7 @@ export default function ParkingSystem() {
                     <div
                       key={spot.id}
                       className={`
-                        aspect-square rounded border-2 flex items-center justify-center text-xs font-medium
+                        aspect-square rounded border-2 flex flex-col items-center justify-center text-xs font-medium relative
                         ${spot.isOccupied 
                           ? 'bg-red-100 border-red-300 text-red-700' 
                           : spot.isReserved 
@@ -413,7 +413,18 @@ export default function ParkingSystem() {
                         }
                       `}
                     >
-                      {spot.id.split('-')[1]}
+                      <span className="text-xs font-bold">
+                        {spot.id.split('-')[1]}
+                      </span>
+                      {spot.isOccupied && spot.vehicle && (
+                        <div className="absolute inset-0 bg-red-500/90 rounded flex flex-col items-center justify-center text-white text-[10px] p-1">
+                          <div className="font-bold">{spot.vehicle.plate}</div>
+                          <Timer 
+                            entryTime={spot.vehicle.entryTime} 
+                            className="text-[8px] text-white"
+                          />
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
