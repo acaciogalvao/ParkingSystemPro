@@ -130,7 +130,7 @@ export default function ParkingSystem() {
     if (activeTab === "dashboard") {
       const fetchStats = async () => {
         try {
-          const response = await fetch(`${backendUrl}/dashboard/stats`);
+          const response = await fetch(`${backendUrl}/api/dashboard/stats`);
           if (response.ok) {
             const data = await response.json();
             setStats(data);
