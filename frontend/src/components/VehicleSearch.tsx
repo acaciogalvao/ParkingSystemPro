@@ -110,7 +110,7 @@ export function VehicleSearch() {
         alert(`Saída processada com sucesso!\nPlaca: ${result.data.plate}\nVaga: ${result.data.spot}\nDuração: ${result.data.duration}\nValor: ${result.data.fee}`);
         
         // Refresh vehicles list with duration
-        const vehiclesResponse = await fetch(`${backendUrl}/vehicles/with-duration`);
+        const vehiclesResponse = await fetch(`${backendUrl}/api/vehicles/with-duration`);
         if (vehiclesResponse.ok) {
           const data = await vehiclesResponse.json();
           setVehicles(data);
