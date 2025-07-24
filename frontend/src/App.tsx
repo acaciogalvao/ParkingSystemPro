@@ -89,21 +89,21 @@ export default function ParkingSystem() {
     const fetchDashboardData = async () => {
       try {
         // Fetch stats
-        const statsResponse = await fetch(`${backendUrl}/dashboard/stats`);
+        const statsResponse = await fetch(`${backendUrl}/api/dashboard/stats`);
         if (statsResponse.ok) {
           const statsData = await statsResponse.json();
           setStats(statsData);
         }
 
         // Fetch recent vehicles with duration
-        const vehiclesResponse = await fetch(`${backendUrl}/vehicles/with-duration`);
+        const vehiclesResponse = await fetch(`${backendUrl}/api/vehicles/with-duration`);
         if (vehiclesResponse.ok) {
           const vehiclesData = await vehiclesResponse.json();
           setRecentVehicles(vehiclesData.slice(0, 3)); // Only show 3 most recent
         }
 
         // Fetch parking spots with duration
-        const spotsResponse = await fetch(`${backendUrl}/spots/with-duration`);
+        const spotsResponse = await fetch(`${backendUrl}/api/spots/with-duration`);
         if (spotsResponse.ok) {
           const spotsData = await spotsResponse.json();
           setParkingSpots(spotsData);
