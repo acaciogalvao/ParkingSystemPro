@@ -9,7 +9,7 @@ import { v4 as uuidv4 } from 'uuid';
 dotenv.config();
 
 // MongoDB connection
-const MONGO_URL = process.env.MONGO_URL || 'mongodb://localhost:27017/parksystem';
+const MONGO_URL = process.env.MONGO_URL || 'mongodb://localhost:27017';
 const client = new MongoClient(MONGO_URL);
 let db;
 
