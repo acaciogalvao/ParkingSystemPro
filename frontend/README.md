@@ -1,70 +1,135 @@
-# Getting Started with Create React App
+# Scout Vite Template
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+This is a [Vite](https://vite.dev) project bootstrapped with React + TypeScript and configured with TailwindCSS v4 and ShadCN UI.
 
-## Available Scripts
+## Getting Started
 
-In the project directory, you can run:
+First, run the development server:
 
-### `npm start`
+```bash
+bun dev
+```
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+Open [http://localhost:5173](http://localhost:5173) with your browser to see the result.
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+You can start editing the page by modifying `src/App.tsx`. The page auto-updates as you edit the file.
 
-### `npm test`
+## Project Configuration
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+### Package Management
 
-### `npm run build`
+This project uses [Bun](https://bun.sh/) as the package manager:
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+- Install dependencies: `bun add <package-name>`
+- Run scripts: `bun <script-name>`
+- Manage dev dependencies: `bun add -d <package-name>`
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+### Theme Customization
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+The project uses Tailwind CSS V4 with a theme defined in:
 
-### `npm run eject`
+- `src/index.css` - For CSS variables including colors in OKLCH format and custom theming
+- Tailwind V4 uses the new `@theme` directive for configuration
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+### ShadCN UI Components
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+This project uses [ShadCN UI](https://ui.shadcn.com) for styled components. The components are incorporated directly into the codebase (not as dependencies), making them fully customizable. All components have been installed:
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+- accordion
+- alert-dialog
+- alert
+- aspect-ratio
+- avatar
+- badge
+- breadcrumb
+- button
+- calendar
+- card
+- carousel
+- chart
+- checkbox
+- collapsible
+- command
+- context-menu
+- dialog
+- drawer
+- dropdown-menu
+- form
+- hover-card
+- input-otp
+- input
+- label
+- menubar
+- navigation-menu
+- pagination
+- popover
+- progress
+- radio-group
+- scroll-area
+- select
+- separator
+- sheet
+- skeleton
+- slider
+- sonner
+- switch
+- table
+- tabs
+- textarea
+- toast
+- toggle-group
+- toggle
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+### Icon Library
 
-## Learn More
+[Lucide React](https://lucide.dev/) is the preferred icon library for this project, as specified in components.json. Always use Lucide icons to maintain consistency:
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+```tsx
+import { ArrowRight } from "lucide-react";
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+// Use in components
+<Button>
+  <span>Click me</span>
+  <ArrowRight />
+</Button>;
+```
 
-### Code Splitting
+### Font Configuration
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+This project uses Google Fonts with:
 
-### Analyzing the Bundle Size
+- Inter (sans-serif)
+- Playfair Display (serif)
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+The font is imported via Google Fonts CDN in `src/index.css` and configured in the Tailwind theme:
 
-### Making a Progressive Web App
+```css
+@import url("https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap");
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+@theme inline {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "Playfair Display", ui-serif, Georgia, serif;
+}
+```
 
-### Advanced Configuration
+To change or update fonts:
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+1. Update the Google Fonts import in `src/index.css`
+2. Modify the `--font-sans` variable in the `@theme` directive
 
-### Deployment
+## Build and Deploy
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
+Build the project:
 
-### `npm run build` fails to minify
+```bash
+bun run build
+```
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+Preview the production build:
+
+```bash
+bun run preview
+```
+
+The built files will be in the `dist` directory, ready for deployment to any static hosting service.
