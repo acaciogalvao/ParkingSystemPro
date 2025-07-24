@@ -66,7 +66,7 @@ export function VehicleSearch() {
     if (!searchTerm.trim()) {
       // If no search term, fetch all vehicles with duration
       try {
-        const response = await fetch(`${backendUrl}/vehicles/with-duration`);
+        const response = await fetch(`${backendUrl}/api/vehicles/with-duration`);
         if (response.ok) {
           const data = await response.json();
           setVehicles(data);
