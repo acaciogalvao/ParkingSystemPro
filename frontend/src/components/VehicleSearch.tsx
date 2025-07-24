@@ -41,7 +41,7 @@ export function VehicleSearch() {
   useEffect(() => {
     const fetchVehicles = async () => {
       try {
-        const response = await fetch(`${backendUrl}/vehicles/with-duration`);
+        const response = await fetch(`${backendUrl}/api/vehicles/with-duration`);
         if (response.ok) {
           const data = await response.json();
           setVehicles(data);
