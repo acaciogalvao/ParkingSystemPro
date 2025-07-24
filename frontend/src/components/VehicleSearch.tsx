@@ -79,7 +79,7 @@ export function VehicleSearch() {
 
     try {
       setLoading(true);
-      const response = await fetch(`${backendUrl}/vehicles/search?plate=${encodeURIComponent(searchTerm)}&owner=${encodeURIComponent(searchTerm)}`);
+      const response = await fetch(`${backendUrl}/api/vehicles/search?plate=${encodeURIComponent(searchTerm)}&owner=${encodeURIComponent(searchTerm)}`);
       if (response.ok) {
         const result = await response.json();
         setVehicles(result.data);
