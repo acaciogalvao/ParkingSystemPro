@@ -95,7 +95,7 @@ export function VehicleSearch() {
   const handleExit = async (vehicle: Vehicle) => {
     try {
       setProcessing(true);
-      const response = await fetch(`${backendUrl}/vehicles/exit`, {
+      const response = await fetch(`${backendUrl}/api/vehicles/exit`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
