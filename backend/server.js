@@ -901,8 +901,9 @@ app.get('/api/history', async (req, res) => {
                 type: op.type,
                 plate: op.plate,
                 spot: op.spot,
-                time: opTime.toLocaleDateString('pt-BR') + ' ' + 
+                time: opTime.toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' }) + ' ' + 
                       opTime.toLocaleTimeString('pt-BR', { 
+                          timeZone: 'America/Sao_Paulo',
                           hour: '2-digit', 
                           minute: '2-digit' 
                       }),
