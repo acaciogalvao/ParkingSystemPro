@@ -244,8 +244,8 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Teste completo de sincronização de vagas executado com 100% de sucesso"
-    - "Sistema de sincronização automática funcionando perfeitamente"
+    - "Funcionalidade de exportação de relatórios testada com 100% de sucesso"
+    - "Sistema de exportação funcionando perfeitamente com formatação brasileira"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
