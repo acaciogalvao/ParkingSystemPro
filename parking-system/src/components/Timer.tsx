@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Clock } from "lucide-react";
+import { formatBrazilianCurrency } from "@/utils/formatters";
 
 interface TimerProps {
   entryTime: string;
