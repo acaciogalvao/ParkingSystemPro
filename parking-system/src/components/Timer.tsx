@@ -49,7 +49,7 @@ export function Timer({ entryTime, className = "", showFee = false, vehicleType 
       // Cars: R$10/hour = R$0.1667/min, Motorcycles: R$7/hour = R$0.1167/min
       const ratePerMinute = vehicleType === 'car' ? (10 / 60) : (7 / 60);
       const fee = durationMinutes * ratePerMinute;
-      setEstimatedFee(fee.toFixed(2));
+      setEstimatedFee(formatBrazilianCurrency(fee));
     };
 
     // Calculate immediately
