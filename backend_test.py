@@ -7,7 +7,7 @@ Tests parking spot synchronization scenarios as requested
 import requests
 import json
 import time
-from datetime import datetime
+from datetime import datetime, timedelta
 import sys
 
 # Backend URL
