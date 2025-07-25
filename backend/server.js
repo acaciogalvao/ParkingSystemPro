@@ -8,6 +8,16 @@ import { v4 as uuidv4 } from 'uuid';
 // Load environment variables
 dotenv.config();
 
+// Helper function to format Brazilian currency values
+function formatBrazilianCurrency(value) {
+    return value.toFixed(2).replace('.', ',');
+}
+
+// Helper function to format Brazilian decimal values  
+function formatBrazilianDecimal(value, decimals = 1) {
+    return value.toFixed(decimals).replace('.', ',');
+}
+
 // MongoDB connection
 const MONGO_URL = process.env.MONGO_URL || 'mongodb://localhost:27017/parksystem';
 const client = new MongoClient(MONGO_URL);
