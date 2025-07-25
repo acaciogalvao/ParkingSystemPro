@@ -33,7 +33,7 @@ export function History() {
       setLoading(true);
       setError(null);
       
-      const response = await fetch(`${backendUrl}/api/history`);
+      const response = await fetch(`${backendUrl}/history`);
       if (!response.ok) {
         throw new Error('Erro ao buscar histórico');
       }
