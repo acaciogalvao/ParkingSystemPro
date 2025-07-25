@@ -406,7 +406,7 @@ export default function ParkingSystem() {
                     <div
                       key={spot.id}
                       className={`
-                        aspect-square rounded border-2 flex flex-col items-center justify-center text-xs font-medium relative
+                        aspect-square rounded-lg border-2 flex flex-col items-center justify-center text-xs font-medium relative overflow-hidden
                         ${spot.isOccupied 
                           ? 'bg-red-100 border-red-300 text-red-700' 
                           : spot.isReserved 
@@ -415,17 +415,21 @@ export default function ParkingSystem() {
                         }
                       `}
                     >
-                      <span className="text-xs font-bold">
+                      <span className="text-xs font-bold z-10">
                         {spot.id.split('-')[1]}
                       </span>
                       {spot.isOccupied && spot.vehicle && (
-                        <div className="absolute inset-0 bg-red-500/90 rounded flex flex-col items-center justify-center text-white text-[10px] p-1">
-                          <div className="font-bold">{spot.vehicle.plate}</div>
-                          <Timer 
-                            entryTime={spot.vehicle.entryTime} 
-                            className="text-[8px] text-white"
-                            vehicleType="car"
-                          />
+                        <div className="absolute inset-0 bg-red-500/95 rounded-lg flex flex-col items-center justify-center text-white text-[9px] p-0.5 leading-tight">
+                          <div className="font-bold text-[10px] truncate w-full text-center mb-0.5">
+                            {spot.vehicle.plate}
+                          </div>
+                          <div className="text-[8px] font-mono">
+                            <Timer 
+                              entryTime={spot.vehicle.entryTime} 
+                              className="text-[8px] text-white"
+                              vehicleType="car"
+                            />
+                          </div>
                         </div>
                       )}
                     </div>
