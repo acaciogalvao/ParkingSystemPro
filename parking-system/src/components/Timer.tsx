@@ -7,6 +7,7 @@ interface TimerProps {
   className?: string;
   showFee?: boolean;
   vehicleType?: 'car' | 'motorcycle';
+  compact?: boolean;
 }
 
 interface Duration {
