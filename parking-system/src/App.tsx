@@ -270,7 +270,7 @@ export default function ParkingSystem() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-xs text-gray-600">Ocupação</p>
-                    <p className="text-lg font-bold">{stats.occupancyRate.toFixed(0)}%</p>
+                    <p className="text-lg font-bold">{formatBrazilianDecimal(stats.occupancyRate, 0)}%</p>
                     <p className="text-xs text-gray-500">atual</p>
                   </div>
                   <TrendingUp className="h-6 w-6 text-purple-600" />
