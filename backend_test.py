@@ -538,6 +538,263 @@ class ParkSystemTester:
         except Exception as e:
             self.add_result("Vehicle Exit - Invalid ID", False, f"Request error: {str(e)}")
     
+    def test_reports_export_endpoint(self):
+        """Test the new reports export endpoint as requested by user"""
+        print_test_header("TESTE DE FUNCIONALIDADE DE EXPORTAÇÃO DE RELATÓRIOS")
+        
+        # Test 1: Basic export without parameters (last 30 days)
+        print_info("1. Testando exportação básica (últimos 30 dias)...")
+        self.test_export_basic()
+        
+        # Test 2: Export with specific date range
+        print_info("2. Testando exportação com range de datas específico...")
+        self.test_export_with_date_range()
+        
+        # Test 3: Export with invalid dates
+        print_info("3. Testando exportação com datas inválidas...")
+        self.test_export_invalid_dates()
+        
+        # Test 4: Validate data structure and Brazilian formatting
+        print_info("4. Validando estrutura de dados e formatação brasileira...")
+        self.test_export_data_structure()
+        
+        # Test 5: Test period with no data
+        print_info("5. Testando período sem dados...")
+        self.test_export_no_data_period()
+    
+    def test_export_basic(self):
+        """Test basic export functionality without parameters"""
+        try:
+            response = requests.get(f"{self.base_url}/api/reports/export", timeout=15)
+            
+            if response.status_code == 200:
+                data = response.json()
+                
+                # Check if response has expected structure
+                required_sections = ["summary", "dailyData", "operations", "vehicles"]
+                missing_sections = [section for section in required_sections if section not in data]
+                
+                if not missing_sections:
+                    self.add_result("Export Básico", True, 
+                                  f"Endpoint retornou estrutura completa com {len(data.get('operations', []))} operações")
+                    print_success(f"✅ Estrutura de dados completa: {required_sections}")
+                    
+                    # Validate summary section
+                    summary = data.get("summary", {})
+                    summary_fields = ["periodStart", "periodEnd", "totalRevenue", "totalEntries", "totalExits"]
+                    missing_summary = [field for field in summary_fields if field not in summary]
+                    
+                    if not missing_summary:
+                        print_success(f"✅ Seção summary completa")
+                        print_info(f"Período: {summary['periodStart']} a {summary['periodEnd']}")
+                        print_info(f"Receita total: R$ {summary['totalRevenue']:.2f}")
+                        print_info(f"Entradas: {summary['totalEntries']}, Saídas: {summary['totalExits']}")
+                    else:
+                        print_warning(f"⚠️ Campos faltando na summary: {missing_summary}")
+                        
+                else:
+                    self.add_result("Export Básico", False, f"Seções faltando: {missing_sections}")
+                    print_error(f"❌ Seções faltando na resposta: {missing_sections}")
+            else:
+                self.add_result("Export Básico", False, f"HTTP {response.status_code}: {response.text}")
+                print_error(f"❌ Erro HTTP {response.status_code}")
+                
+        except Exception as e:
+            self.add_result("Export Básico", False, f"Erro de requisição: {str(e)}")
+            print_error(f"❌ Erro na requisição: {str(e)}")
+    
+    def test_export_with_date_range(self):
+        """Test export with specific date range"""
+        try:
+            # Test with a specific date range (last 7 days)
+            end_date = datetime.now().strftime('%Y-%m-%d')
+            start_date = (datetime.now() - timedelta(days=7)).strftime('%Y-%m-%d')
+            
+            params = {
+                "startDate": start_date,
+                "endDate": end_date
+            }
+            
+            response = requests.get(f"{self.base_url}/api/reports/export", params=params, timeout=15)
+            
+            if response.status_code == 200:
+                data = response.json()
+                summary = data.get("summary", {})
+                
+                # Validate date range
+                if summary.get("periodStart") == start_date and summary.get("periodEnd") == end_date:
+                    self.add_result("Export com Datas", True, 
+                                  f"Range de datas aplicado corretamente: {start_date} a {end_date}")
+                    print_success(f"✅ Range de datas correto: {start_date} a {end_date}")
+                    
+                    # Check daily data is within range
+                    daily_data = data.get("dailyData", [])
+                    if daily_data:
+                        dates_in_range = all(start_date <= day["date"] <= end_date for day in daily_data)
+                        if dates_in_range:
+                            print_success(f"✅ Dados diários dentro do range: {len(daily_data)} dias")
+                        else:
+                            print_warning("⚠️ Alguns dados diários fora do range especificado")
+                    
+                else:
+                    self.add_result("Export com Datas", False, 
+                                  f"Range de datas incorreto: esperado {start_date}-{end_date}, obtido {summary.get('periodStart')}-{summary.get('periodEnd')}")
+            else:
+                self.add_result("Export com Datas", False, f"HTTP {response.status_code}")
+                
+        except Exception as e:
+            self.add_result("Export com Datas", False, f"Erro: {str(e)}")
+    
+    def test_export_invalid_dates(self):
+        """Test export with invalid date parameters"""
+        try:
+            # Test with invalid date format
+            params = {"startDate": "invalid-date", "endDate": "2024-13-45"}
+            
+            response = requests.get(f"{self.base_url}/api/reports/export", params=params, timeout=15)
+            
+            # Should either handle gracefully or return error
+            if response.status_code == 200:
+                # If it handles gracefully, check if it falls back to defaults
+                data = response.json()
+                summary = data.get("summary", {})
+                
+                if "periodStart" in summary and "periodEnd" in summary:
+                    self.add_result("Export Datas Inválidas", True, 
+                                  "Sistema lidou graciosamente com datas inválidas")
+                    print_success("✅ Sistema lidou com datas inválidas graciosamente")
+                else:
+                    self.add_result("Export Datas Inválidas", False, "Resposta inválida para datas inválidas")
+            elif response.status_code == 400:
+                # If it returns error, that's also acceptable
+                self.add_result("Export Datas Inválidas", True, 
+                              "Sistema rejeitou datas inválidas apropriadamente")
+                print_success("✅ Sistema rejeitou datas inválidas com erro 400")
+            else:
+                self.add_result("Export Datas Inválidas", False, f"HTTP {response.status_code}")
+                
+        except Exception as e:
+            self.add_result("Export Datas Inválidas", False, f"Erro: {str(e)}")
+    
+    def test_export_data_structure(self):
+        """Test data structure and Brazilian formatting"""
+        try:
+            response = requests.get(f"{self.base_url}/api/reports/export", timeout=15)
+            
+            if response.status_code == 200:
+                data = response.json()
+                
+                # Test Brazilian formatting
+                formatting_tests = []
+                
+                # Check summary data
+                summary = data.get("summary", {})
+                if "totalRevenue" in summary:
+                    revenue = summary["totalRevenue"]
+                    if isinstance(revenue, (int, float)):
+                        formatting_tests.append(("Receita é numérica", True))
+                        print_success(f"✅ Receita total: R$ {revenue:.2f}")
+                    else:
+                        formatting_tests.append(("Receita é numérica", False))
+                
+                # Check operations data structure
+                operations = data.get("operations", [])
+                if operations:
+                    sample_op = operations[0]
+                    required_op_fields = ["id", "type", "plate", "spot", "time", "timestamp"]
+                    missing_op_fields = [field for field in required_op_fields if field not in sample_op]
+                    
+                    if not missing_op_fields:
+                        formatting_tests.append(("Estrutura de operações", True))
+                        print_success("✅ Estrutura de operações válida")
+                        
+                        # Check time formatting (should be Brazilian format)
+                        time_str = sample_op.get("time", "")
+                        if "/" in time_str and ":" in time_str:
+                            formatting_tests.append(("Formatação de tempo brasileira", True))
+                            print_success(f"✅ Formatação de tempo: {time_str}")
+                        else:
+                            formatting_tests.append(("Formatação de tempo brasileira", False))
+                    else:
+                        formatting_tests.append(("Estrutura de operações", False))
+                
+                # Check vehicles data
+                vehicles = data.get("vehicles", {})
+                if "parked" in vehicles and "exited" in vehicles:
+                    formatting_tests.append(("Estrutura de veículos", True))
+                    print_success("✅ Estrutura de veículos válida (parked/exited)")
+                else:
+                    formatting_tests.append(("Estrutura de veículos", False))
+                
+                # Check daily data
+                daily_data = data.get("dailyData", [])
+                if daily_data:
+                    sample_day = daily_data[0]
+                    daily_fields = ["date", "entries", "exits", "revenue"]
+                    missing_daily = [field for field in daily_fields if field not in sample_day]
+                    
+                    if not missing_daily:
+                        formatting_tests.append(("Estrutura dados diários", True))
+                        print_success("✅ Estrutura de dados diários válida")
+                    else:
+                        formatting_tests.append(("Estrutura dados diários", False))
+                
+                # Overall assessment
+                passed_formatting = sum(1 for _, passed in formatting_tests if passed)
+                total_formatting = len(formatting_tests)
+                
+                if passed_formatting == total_formatting:
+                    self.add_result("Estrutura e Formatação", True, 
+                                  f"Todos os {total_formatting} testes de formatação passaram")
+                    print_success(f"✅ Formatação brasileira: {passed_formatting}/{total_formatting} testes passaram")
+                else:
+                    self.add_result("Estrutura e Formatação", False, 
+                                  f"Apenas {passed_formatting}/{total_formatting} testes de formatação passaram")
+                    
+            else:
+                self.add_result("Estrutura e Formatação", False, f"HTTP {response.status_code}")
+                
+        except Exception as e:
+            self.add_result("Estrutura e Formatação", False, f"Erro: {str(e)}")
+    
+    def test_export_no_data_period(self):
+        """Test export for period with no data"""
+        try:
+            # Test with future dates (should have no data)
+            future_start = (datetime.now() + timedelta(days=30)).strftime('%Y-%m-%d')
+            future_end = (datetime.now() + timedelta(days=60)).strftime('%Y-%m-%d')
+            
+            params = {
+                "startDate": future_start,
+                "endDate": future_end
+            }
+            
+            response = requests.get(f"{self.base_url}/api/reports/export", params=params, timeout=15)
+            
+            if response.status_code == 200:
+                data = response.json()
+                summary = data.get("summary", {})
+                operations = data.get("operations", [])
+                daily_data = data.get("dailyData", [])
+                
+                # Should return empty data but valid structure
+                if (summary.get("totalEntries", 0) == 0 and 
+                    summary.get("totalExits", 0) == 0 and 
+                    summary.get("totalRevenue", 0) == 0 and
+                    len(operations) == 0):
+                    
+                    self.add_result("Export Período Vazio", True, 
+                                  "Sistema lidou corretamente com período sem dados")
+                    print_success("✅ Período sem dados retornou estrutura válida vazia")
+                else:
+                    self.add_result("Export Período Vazio", False, 
+                                  "Período futuro retornou dados inesperados")
+            else:
+                self.add_result("Export Período Vazio", False, f"HTTP {response.status_code}")
+                
+        except Exception as e:
+            self.add_result("Export Período Vazio", False, f"Erro: {str(e)}")
+
     def run_all_tests(self):
         """Run synchronization-focused tests as requested"""
         print(f"{Colors.BOLD}{Colors.BLUE}🚀 TESTE COMPLETO DE SINCRONIZAÇÃO DE VAGAS - ParkSystem Pro{Colors.ENDC}")
