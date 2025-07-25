@@ -64,9 +64,9 @@ export function Timer({ entryTime, className = "", showFee = false, vehicleType 
 
   return (
     <div className={`inline-flex items-center gap-1 ${className}`}>
-      <Clock className="w-3 h-3 flex-shrink-0" />
+      {!compact && <Clock className="w-3 h-3 flex-shrink-0" />}
       <span className="font-mono text-xs font-medium leading-none">
-        {duration.formatted}
+        {compact ? `${duration.hours}:${duration.minutes.toString().padStart(2, '0')}` : duration.formatted}
       </span>
       {showFee && (
         <span className="text-xs text-gray-500 ml-1 leading-none">
