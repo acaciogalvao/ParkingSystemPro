@@ -503,15 +503,7 @@ export default function ParkingSystem() {
           </TabsContent>
 
           <TabsContent value="history">
-            <Card>
-              <CardHeader>
-                <CardTitle>Histórico de Operações</CardTitle>
-                <CardDescription>Consulta de entradas e saídas anteriores</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <p className="text-center text-gray-500 py-8">Funcionalidade em desenvolvimento...</p>
-              </CardContent>
-            </Card>
+            <History />
           </TabsContent>
 
           <TabsContent value="reports">
