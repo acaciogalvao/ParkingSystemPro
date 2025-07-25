@@ -74,6 +74,18 @@ frontend:
         agent: "testing"
         comment: "✅ Navegação funcionando corretamente. Usuário consegue acessar página inicial e clicar na aba 'Entrada' para acessar o formulário de nova entrada de veículo. Formulário carrega corretamente com todos os campos visíveis."
 
+  - task: "Funcionalidade de exportação de relatórios"
+    implemented: true
+    working: true
+    file: "/app/backend/server.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "✅ Funcionalidade de exportação funcionando perfeitamente. Endpoint /api/reports/export retorna dados estruturados com summary, dailyData, operations e vehicles. Suporte a parâmetros de data (startDate, endDate), formatação brasileira (datas dd/mm/yyyy, moeda R$ X,XX), validação de estrutura de dados completa. Testes: 5/5 passaram - exportação básica, range de datas, período vazio, estrutura e formatação. Minor: retorna 500 para datas inválidas (deveria ser 400)."
+
 backend:
   - task: "API Health Check Endpoint"
     implemented: true
