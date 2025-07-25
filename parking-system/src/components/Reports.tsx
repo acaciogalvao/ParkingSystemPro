@@ -88,7 +88,7 @@ export function Reports() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-xs text-gray-600">Receita</p>
-              <p className="text-sm font-bold">R$ {monthlyStats.totalRevenue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+              <p className="text-sm font-bold">R$ {formatBrazilianCurrency(monthlyStats.totalRevenue)}</p>
               <Badge variant="outline" className="text-xs text-green-600 border-green-600">+12.5%</Badge>
             </div>
             <DollarSign className="h-5 w-5 text-green-600" />
