@@ -428,6 +428,7 @@ export default function ParkingSystem() {
                               entryTime={spot.vehicle.entryTime} 
                               className="text-[7px] text-white leading-none"
                               vehicleType="car"
+                              compact={true}
                             />
                           </div>
                         </div>
