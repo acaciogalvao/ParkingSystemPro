@@ -933,6 +933,208 @@ app.get('/api/history', async (req, res) => {
     }
 });
 
+// Get export data for reports
+app.get('/api/reports/export', async (req, res) => {
+    try {
+        const { startDate, endDate, format } = req.query;
+        
+        // Default date range: last 30 days
+        let start = new Date();
+        start.setDate(start.getDate() - 30);
+        start.setHours(0, 0, 0, 0);
+        
+        let end = new Date();
+        end.setHours(23, 59, 59, 999);
+        
+        if (startDate) {
+            start = new Date(startDate);
+            start.setHours(0, 0, 0, 0);
+        }
+        
+        if (endDate) {
+            end = new Date(endDate);
+            end.setHours(23, 59, 59, 999);
+        }
+
+        const operationsCollection = db.collection('operations_history');
+        const vehiclesCollection = db.collection('vehicles');
+        const spotsCollection = db.collection('parking_spots');
+
+        // Get operations in date range
+        const operations = await operationsCollection.find({
+            timestamp: { 
+                $gte: start.toISOString(),
+                $lte: end.toISOString()
+            }
+        }).sort({ timestamp: -1 }).toArray();
+
+        // Get current statistics
+        const stats = await getDashboardStats();
+        
+        // Get vehicles data
+        const allVehicles = await vehiclesCollection.find({}).toArray();
+        const parkedVehicles = await vehiclesCollection.find({ status: 'parked' }).toArray();
+        const exitedVehicles = await vehiclesCollection.find({ 
+            status: 'exited',
+            exitTime: { 
+                $gte: start.toISOString(),
+                $lte: end.toISOString()
+            }
+        }).toArray();
+
+        // Calculate revenue and other metrics
+        const totalRevenue = exitedVehicles.reduce((sum, v) => sum + (v.fee || 0), 0);
+        const totalEntries = operations.filter(op => op.type === 'entry').length;
+        const totalExits = operations.filter(op => op.type === 'exit').length;
+        
+        // Group data by date
+        const dailyData = {};
+        operations.forEach(op => {
+            const date = new Date(op.timestamp).toISOString().split('T')[0];
+            if (!dailyData[date]) {
+                dailyData[date] = {
+                    date: date,
+                    entries: 0,
+                    exits: 0,
+                    revenue: 0
+                };
+            }
+            
+            if (op.type === 'entry') {
+                dailyData[date].entries++;
+            } else if (op.type === 'exit') {
+                dailyData[date].exits++;
+                dailyData[date].revenue += op.data?.fee || 0;
+            }
+        });
+
+        // Vehicle type distribution
+        const vehicleTypes = {
+            cars: allVehicles.filter(v => v.type === 'car').length,
+            motorcycles: allVehicles.filter(v => v.type === 'motorcycle').length
+        };
+
+        // Prepare export data
+        const exportData = {
+            summary: {
+                periodStart: start.toISOString().split('T')[0],
+                periodEnd: end.toISOString().split('T')[0],
+                totalRevenue: totalRevenue,
+                totalEntries: totalEntries,
+                totalExits: totalExits,
+                currentlyParked: parkedVehicles.length,
+                averageRevenue: totalExits > 0 ? totalRevenue / totalExits : 0,
+                vehicleTypes: vehicleTypes,
+                occupancyRate: stats.occupancyRate
+            },
+            dailyData: Object.values(dailyData).sort((a, b) => a.date.localeCompare(b.date)),
+            operations: operations.map(op => {
+                const opTime = new Date(op.timestamp);
+                return {
+                    id: op.id,
+                    type: op.type === 'entry' ? 'Entrada' : op.type === 'exit' ? 'Saída' : op.type,
+                    plate: op.plate,
+                    spot: op.spot,
+                    date: opTime.toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' }),
+                    time: opTime.toLocaleTimeString('pt-BR', { 
+                        timeZone: 'America/Sao_Paulo',
+                        hour: '2-digit', 
+                        minute: '2-digit' 
+                    }),
+                    fee: op.data?.fee || 0,
+                    duration: op.data?.duration || 0,
+                    timestamp: op.timestamp
+                };
+            }),
+            vehicles: {
+                parked: parkedVehicles.map(v => ({
+                    id: v.id,
+                    plate: v.plate,
+                    type: v.type === 'car' ? 'Carro' : 'Moto',
+                    model: v.model,
+                    color: v.color,
+                    ownerName: v.ownerName,
+                    ownerPhone: v.ownerPhone || '',
+                    spot: v.spot,
+                    entryTime: new Date(v.entryTime).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' }),
+                    status: 'Estacionado'
+                })),
+                exited: exitedVehicles.map(v => ({
+                    id: v.id,
+                    plate: v.plate,
+                    type: v.type === 'car' ? 'Carro' : 'Moto',
+                    model: v.model,
+                    color: v.color,
+                    ownerName: v.ownerName,
+                    ownerPhone: v.ownerPhone || '',
+                    spot: v.spot,
+                    entryTime: new Date(v.entryTime).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' }),
+                    exitTime: new Date(v.exitTime).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' }),
+                    duration: `${formatBrazilianDecimal(v.duration || 0)}h`,
+                    fee: `R$ ${formatBrazilianCurrency(v.fee || 0)}`,
+                    status: 'Saiu'
+                }))
+            }
+        };
+
+        res.json({
+            success: true,
+            data: exportData
+        });
+
+    } catch (error) {
+        console.error('Error generating export data:', error);
+        res.status(500).json({ detail: `Erro ao gerar dados de exportação: ${error.message}` });
+    }
+});
+
+// Helper function to get dashboard stats
+async function getDashboardStats() {
+    try {
+        await synchronizeParkingSpots();
+        
+        const vehiclesCollection = db.collection('vehicles');
+        const spotsCollection = db.collection('parking_spots');
+
+        const totalCars = await vehiclesCollection.countDocuments({
+            status: 'parked',
+            type: 'car'
+        });
+
+        const totalMotorcycles = await vehiclesCollection.countDocuments({
+            status: 'parked',
+            type: 'motorcycle'
+        });
+
+        const availableSpots = await spotsCollection.countDocuments({ isOccupied: false });
+
+        const todayStart = new Date();
+        todayStart.setHours(0, 0, 0, 0);
+        
+        const todayExits = await vehiclesCollection.find({
+            status: 'exited',
+            exitTime: { $gte: todayStart.toISOString() }
+        }).toArray();
+
+        const todayRevenue = todayExits.reduce((sum, exit) => sum + (exit.fee || 0), 0);
+
+        const totalSpots = 70;
+        const occupiedSpots = totalSpots - availableSpots;
+        const occupancyRate = (occupiedSpots / totalSpots) * 100;
+
+        return {
+            totalCarsParked: totalCars,
+            totalMotorcyclesParked: totalMotorcycles,
+            availableSpots: availableSpots,
+            todayRevenue: todayRevenue,
+            occupancyRate: occupancyRate
+        };
+    } catch (error) {
+        console.error('Error getting dashboard stats:', error);
+        throw error;
+    }
+}
+
 // Error handling middleware
 app.use((error, req, res, next) => {
     console.error('Unhandled error:', error);
