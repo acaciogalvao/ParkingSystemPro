@@ -601,7 +601,7 @@ app.get('/api/vehicles/with-duration', async (req, res) => {
                     totalSeconds: Math.floor(durationMs / 1000),
                     formatted: `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`
                 },
-                estimatedFee: estimatedFee.toFixed(2),
+                estimatedFee: formatBrazilianCurrency(estimatedFee),
                 entryTimestamp: vehicle.entryTime
             };
         });
