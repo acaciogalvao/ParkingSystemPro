@@ -17,7 +17,7 @@ interface Duration {
   formatted: string;
 }
 
-export function Timer({ entryTime, className = "", showFee = false, vehicleType = 'car' }: TimerProps) {
+export function Timer({ entryTime, className = "", showFee = false, vehicleType = 'car', compact = false }: TimerProps) {
   const [duration, setDuration] = useState<Duration>({
     hours: 0,
     minutes: 0,
