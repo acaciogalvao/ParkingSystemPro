@@ -7,6 +7,7 @@ import { VehicleEntry } from "@/components/VehicleEntry";
 import { VehicleSearch } from "@/components/VehicleSearch";
 import { Reports } from "@/components/Reports";
 import { Timer } from "@/components/Timer";
+import { formatBrazilianDecimal } from "@/utils/formatters";
 import { 
   Car, 
   Bike, 
