@@ -247,8 +247,9 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Funcionalidade de exportação de relatórios testada com 100% de sucesso"
-    - "Sistema de exportação funcionando perfeitamente com formatação brasileira"
+    - "Funcionalidade de exportação de relatórios RE-TESTADA com 100% de sucesso"
+    - "Backend API de exportação completamente funcional - problemas de download são de frontend/UI"
+    - "Issue 'Clone e corrija para baixar os relatórios' - backend funcionando perfeitamente"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
