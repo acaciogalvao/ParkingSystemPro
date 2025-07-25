@@ -1286,7 +1286,18 @@ class ParkSystemTester:
 def main():
     """Main test execution"""
     tester = ParkSystemTester()
-    tester.run_all_tests()
+    
+    # Test the new export functionality as requested by user
+    tester.test_reports_export_endpoint()
+    
+    # Also test existing endpoints that support export functionality
+    tester.test_health_check()
+    tester.test_monthly_report()
+    tester.test_dashboard_stats()
+    tester.test_operations_history()
+    
+    # Print summary
+    tester.print_summary()
     
     # Return exit code based on results
     if tester.test_results["failed"] == 0:
