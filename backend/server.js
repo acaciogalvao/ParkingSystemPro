@@ -481,6 +481,7 @@ app.post('/api/vehicles/exit', async (req, res) => {
                 duration: `${durationHours.toFixed(1)}h`,
                 fee: `R$ ${fee.toFixed(2)}`,
                 exitTime: exitTime.toLocaleTimeString('pt-BR', { 
+                    timeZone: 'America/Sao_Paulo',
                     hour: '2-digit', 
                     minute: '2-digit' 
                 })
