@@ -339,6 +339,7 @@ app.get('/api/vehicles', async (req, res) => {
                 ownerName: vehicle.ownerName,
                 ownerPhone: vehicle.ownerPhone,
                 entryTime: entryTime.toLocaleTimeString('pt-BR', { 
+                    timeZone: 'America/Sao_Paulo',
                     hour: '2-digit', 
                     minute: '2-digit' 
                 }),
