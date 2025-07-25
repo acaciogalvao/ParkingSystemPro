@@ -143,7 +143,7 @@ export function Reports() {
             />
             <YAxis hide />
             <Tooltip 
-              formatter={(value) => [`R$ ${value}`, 'Receita']}
+              formatter={(value) => [`R$ ${formatBrazilianCurrency(value)}`, 'Receita']}
               labelFormatter={(label) => `${label}`}
               contentStyle={{ 
                 backgroundColor: 'white', 
