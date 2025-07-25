@@ -568,7 +568,13 @@ class ParkSystemTester:
             response = requests.get(f"{self.base_url}/api/reports/export", timeout=15)
             
             if response.status_code == 200:
-                data = response.json()
+                response_data = response.json()
+                
+                # Check if response has success wrapper
+                if response_data.get("success") and "data" in response_data:
+                    data = response_data["data"]
+                else:
+                    data = response_data
                 
                 # Check if response has expected structure
                 required_sections = ["summary", "dailyData", "operations", "vehicles"]
@@ -618,7 +624,14 @@ class ParkSystemTester:
             response = requests.get(f"{self.base_url}/api/reports/export", params=params, timeout=15)
             
             if response.status_code == 200:
-                data = response.json()
+                response_data = response.json()
+                
+                # Check if response has success wrapper
+                if response_data.get("success") and "data" in response_data:
+                    data = response_data["data"]
+                else:
+                    data = response_data
+                    
                 summary = data.get("summary", {})
                 
                 # Validate date range
@@ -656,7 +669,14 @@ class ParkSystemTester:
             # Should either handle gracefully or return error
             if response.status_code == 200:
                 # If it handles gracefully, check if it falls back to defaults
-                data = response.json()
+                response_data = response.json()
+                
+                # Check if response has success wrapper
+                if response_data.get("success") and "data" in response_data:
+                    data = response_data["data"]
+                else:
+                    data = response_data
+                    
                 summary = data.get("summary", {})
                 
                 if "periodStart" in summary and "periodEnd" in summary:
@@ -682,7 +702,13 @@ class ParkSystemTester:
             response = requests.get(f"{self.base_url}/api/reports/export", timeout=15)
             
             if response.status_code == 200:
-                data = response.json()
+                response_data = response.json()
+                
+                # Check if response has success wrapper
+                if response_data.get("success") and "data" in response_data:
+                    data = response_data["data"]
+                else:
+                    data = response_data
                 
                 # Test Brazilian formatting
                 formatting_tests = []
@@ -701,7 +727,7 @@ class ParkSystemTester:
                 operations = data.get("operations", [])
                 if operations:
                     sample_op = operations[0]
-                    required_op_fields = ["id", "type", "plate", "spot", "time", "timestamp"]
+                    required_op_fields = ["id", "type", "plate", "spot", "date", "time", "timestamp"]
                     missing_op_fields = [field for field in required_op_fields if field not in sample_op]
                     
                     if not missing_op_fields:
@@ -709,14 +735,16 @@ class ParkSystemTester:
                         print_success("✅ Estrutura de operações válida")
                         
                         # Check time formatting (should be Brazilian format)
+                        date_str = sample_op.get("date", "")
                         time_str = sample_op.get("time", "")
-                        if "/" in time_str and ":" in time_str:
+                        if "/" in date_str and ":" in time_str:
                             formatting_tests.append(("Formatação de tempo brasileira", True))
-                            print_success(f"✅ Formatação de tempo: {time_str}")
+                            print_success(f"✅ Formatação de tempo: {date_str} {time_str}")
                         else:
                             formatting_tests.append(("Formatação de tempo brasileira", False))
                     else:
                         formatting_tests.append(("Estrutura de operações", False))
+                        print_warning(f"⚠️ Campos faltando nas operações: {missing_op_fields}")
                 
                 # Check vehicles data
                 vehicles = data.get("vehicles", {})
@@ -772,7 +800,14 @@ class ParkSystemTester:
             response = requests.get(f"{self.base_url}/api/reports/export", params=params, timeout=15)
             
             if response.status_code == 200:
-                data = response.json()
+                response_data = response.json()
+                
+                # Check if response has success wrapper
+                if response_data.get("success") and "data" in response_data:
+                    data = response_data["data"]
+                else:
+                    data = response_data
+                    
                 summary = data.get("summary", {})
                 operations = data.get("operations", [])
                 daily_data = data.get("dailyData", [])
