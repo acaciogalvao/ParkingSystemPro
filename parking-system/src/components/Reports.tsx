@@ -116,9 +116,19 @@ export function Reports() {
           <Calendar className="w-3 h-3 mr-1" />
           Período
         </Button>
-        <Button variant="outline" size="sm" className="whitespace-nowrap flex-shrink-0">
-          <Download className="w-3 h-3 mr-1" />
-          Exportar
+        <Button 
+          variant="outline" 
+          size="sm" 
+          className="whitespace-nowrap flex-shrink-0"
+          onClick={() => handleExport('pdf')}
+          disabled={exportLoading === 'pdf'}
+        >
+          {exportLoading === 'pdf' ? (
+            <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+          ) : (
+            <Download className="w-3 h-3 mr-1" />
+          )}
+          Exportar PDF
         </Button>
       </div>
 
@@ -127,9 +137,9 @@ export function Reports() {
         <Card className="p-3">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs text-gray-600">Receita</p>
-              <p className="text-sm font-bold">R$ {formatBrazilianCurrency(monthlyStats.totalRevenue)}</p>
-              <Badge variant="outline" className="text-xs text-green-600 border-green-600">+12.5%</Badge>
+              <p className="text-xs text-gray-600">Receita Hoje</p>
+              <p className="text-sm font-bold">{formatCurrencyBR(dashboardStats?.todayRevenue || 0)}</p>
+              <Badge variant="outline" className="text-xs text-green-600 border-green-600">Real</Badge>
             </div>
             <DollarSign className="h-5 w-5 text-green-600" />
           </div>
@@ -138,9 +148,9 @@ export function Reports() {
         <Card className="p-3">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs text-gray-600">Veículos</p>
-              <p className="text-sm font-bold">{monthlyStats.totalVehicles.toLocaleString('pt-BR')}</p>
-              <Badge variant="outline" className="text-xs text-green-600 border-green-600">+8.2%</Badge>
+              <p className="text-xs text-gray-600">Carros</p>
+              <p className="text-sm font-bold">{dashboardStats?.totalCarsParked || 0}</p>
+              <Badge variant="outline" className="text-xs text-blue-600 border-blue-600">Atual</Badge>
             </div>
             <Car className="h-5 w-5 text-blue-600" />
           </div>
@@ -149,9 +159,9 @@ export function Reports() {
         <Card className="p-3">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs text-gray-600">Ocupação</p>
-              <p className="text-sm font-bold">{monthlyStats.avgOccupancy}%</p>
-              <Badge variant="outline" className="text-xs text-blue-600 border-blue-600">-2.1%</Badge>
+              <p className="text-xs text-gray-600">Motos</p>
+              <p className="text-sm font-bold">{dashboardStats?.totalMotorcyclesParked || 0}</p>
+              <Badge variant="outline" className="text-xs text-green-600 border-green-600">Atual</Badge>
             </div>
             <TrendingUp className="h-5 w-5 text-purple-600" />
           </div>
@@ -160,9 +170,9 @@ export function Reports() {
         <Card className="p-3">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs text-gray-600">Tempo Médio</p>
-              <p className="text-sm font-bold">{monthlyStats.avgStayTime}</p>
-              <Badge variant="outline" className="text-xs text-yellow-600 border-yellow-600">+5.3%</Badge>
+              <p className="text-xs text-gray-600">Ocupação</p>
+              <p className="text-sm font-bold">{dashboardStats?.occupancyRate?.toFixed(1) || 0}%</p>
+              <Badge variant="outline" className="text-xs text-orange-600 border-orange-600">Atual</Badge>
             </div>
             <Clock className="h-5 w-5 text-orange-600" />
           </div>
@@ -170,97 +180,127 @@ export function Reports() {
       </div>
 
       {/* Revenue Chart - Mobile */}
-      <Card className="p-4">
-        <h3 className="font-semibold mb-3 text-sm">Receita Semanal</h3>
-        <ResponsiveContainer width="100%" height={200}>
-          <BarChart data={revenueData} margin={{ top: 5, right: 5, left: 5, bottom: 5 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-            <XAxis 
-              dataKey="day" 
-              axisLine={false}
-              tickLine={false}
-              tick={{ fontSize: 10 }}
-            />
-            <YAxis hide />
-            <Tooltip 
-              formatter={(value) => [`R$ ${formatBrazilianCurrency(value)}`, 'Receita']}
-              labelFormatter={(label) => `${label}`}
-              contentStyle={{ 
-                backgroundColor: 'white', 
-                border: '1px solid #e5e7eb',
-                borderRadius: '8px',
-                fontSize: '12px'
-              }}
-            />
-            <Bar dataKey="revenue" fill="#3B82F6" radius={[4, 4, 0, 0]} />
-          </BarChart>
-        </ResponsiveContainer>
-      </Card>
+      {processedData?.revenueData && processedData.revenueData.length > 0 && (
+        <Card className="p-4">
+          <h3 className="font-semibold mb-3 text-sm">Receita dos Últimos 7 Dias</h3>
+          <ResponsiveContainer width="100%" height={200}>
+            <BarChart data={processedData.revenueData} margin={{ top: 5, right: 5, left: 5, bottom: 5 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+              <XAxis 
+                dataKey="day" 
+                axisLine={false}
+                tickLine={false}
+                tick={{ fontSize: 10 }}
+              />
+              <YAxis hide />
+              <Tooltip 
+                formatter={(value) => [`R$ ${formatBrazilianCurrency(value as number)}`, 'Receita']}
+                labelFormatter={(label) => `${label}`}
+                contentStyle={{ 
+                  backgroundColor: 'white', 
+                  border: '1px solid #e5e7eb',
+                  borderRadius: '8px',
+                  fontSize: '12px'
+                }}
+              />
+              <Bar dataKey="revenue" fill="#3B82F6" radius={[4, 4, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </Card>
+      )}
+
+      {/* Entries Chart - Mobile */}
+      {processedData?.entriesData && processedData.entriesData.length > 0 && (
+        <Card className="p-4">
+          <h3 className="font-semibold mb-3 text-sm">Entradas dos Últimos 7 Dias</h3>
+          <ResponsiveContainer width="100%" height={200}>
+            <BarChart data={processedData.entriesData} margin={{ top: 5, right: 5, left: 5, bottom: 5 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+              <XAxis 
+                dataKey="day" 
+                axisLine={false}
+                tickLine={false}
+                tick={{ fontSize: 10 }}
+              />
+              <YAxis hide />
+              <Tooltip 
+                formatter={(value) => [`${value}`, 'Entradas']}
+                labelFormatter={(label) => `${label}`}
+                contentStyle={{ 
+                  backgroundColor: 'white', 
+                  border: '1px solid #e5e7eb',
+                  borderRadius: '8px',
+                  fontSize: '12px'
+                }}
+              />
+              <Bar dataKey="entries" fill="#10B981" radius={[4, 4, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </Card>
+      )}
 
       {/* Vehicle Type Distribution - Mobile */}
-      <Card className="p-4">
-        <h3 className="font-semibold mb-3 text-sm">Distribuição por Tipo</h3>
-        <div className="space-y-3">
-          {vehicleTypeData.map((item, index) => (
-            <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-              <div className="flex items-center gap-3">
-                <div 
-                  className="w-4 h-4 rounded"
-                  style={{ backgroundColor: item.color }}
-                ></div>
-                <span className="text-sm font-medium">{item.name}</span>
+      {processedData?.vehicleTypeData && processedData.vehicleTypeData.length > 0 && (
+        <Card className="p-4">
+          <h3 className="font-semibold mb-3 text-sm">Veículos Estacionados Atualmente</h3>
+          <div className="space-y-3">
+            {processedData.vehicleTypeData.map((item, index) => (
+              <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                <div className="flex items-center gap-3">
+                  <div 
+                    className="w-4 h-4 rounded"
+                    style={{ backgroundColor: item.color }}
+                  ></div>
+                  <span className="text-sm font-medium">{item.name}</span>
+                </div>
+                <span className="text-sm font-bold">{item.value}</span>
               </div>
-              <span className="text-sm font-bold">{item.value}%</span>
-            </div>
-          ))}
-        </div>
-      </Card>
-
-      {/* Occupancy Chart - Mobile */}
-      <Card className="p-4">
-        <h3 className="font-semibold mb-3 text-sm">Ocupação por Horário</h3>
-        <ResponsiveContainer width="100%" height={180}>
-          <BarChart data={occupancyData.slice(0, 8)} margin={{ top: 5, right: 5, left: 5, bottom: 5 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-            <XAxis 
-              dataKey="hour" 
-              axisLine={false}
-              tickLine={false}
-              tick={{ fontSize: 9 }}
-            />
-            <YAxis hide />
-            <Tooltip 
-              formatter={(value) => [`${value}%`, 'Ocupação']}
-              labelFormatter={(label) => `${label}`}
-              contentStyle={{ 
-                backgroundColor: 'white', 
-                border: '1px solid #e5e7eb',
-                borderRadius: '8px',
-                fontSize: '12px'
-              }}
-            />
-            <Bar dataKey="occupancy" fill="#10B981" radius={[4, 4, 0, 0]} />
-          </BarChart>
-        </ResponsiveContainer>
-        <p className="text-xs text-gray-500 mt-2 text-center">
-          Mostrando primeiros 8 horários
-        </p>
-      </Card>
+            ))}
+          </div>
+        </Card>
+      )}
 
       {/* Export Options - Mobile */}
       <Card className="p-4">
         <h3 className="font-semibold mb-3 text-sm">Exportar Relatórios</h3>
         <div className="space-y-2">
-          <Button variant="outline" className="w-full h-10 justify-start">
-            <Download className="w-4 h-4 mr-2" />
+          <Button 
+            variant="outline" 
+            className="w-full h-10 justify-start"
+            onClick={() => handleExport('pdf')}
+            disabled={exportLoading === 'pdf'}
+          >
+            {exportLoading === 'pdf' ? (
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+            ) : (
+              <Download className="w-4 h-4 mr-2" />
+            )}
             Relatório PDF
           </Button>
-          <Button variant="outline" className="w-full h-10 justify-start">
-            <Download className="w-4 h-4 mr-2" />
+          <Button 
+            variant="outline" 
+            className="w-full h-10 justify-start"
+            onClick={() => handleExport('excel')}
+            disabled={exportLoading === 'excel'}
+          >
+            {exportLoading === 'excel' ? (
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+            ) : (
+              <Download className="w-4 h-4 mr-2" />
+            )}
             Planilha Excel
           </Button>
-          <Button variant="outline" className="w-full h-10 justify-start">
-            <Download className="w-4 h-4 mr-2" />
+          <Button 
+            variant="outline" 
+            className="w-full h-10 justify-start"
+            onClick={() => handleExport('csv')}
+            disabled={exportLoading === 'csv'}
+          >
+            {exportLoading === 'csv' ? (
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+            ) : (
+              <Download className="w-4 h-4 mr-2" />
+            )}
             Dados CSV
           </Button>
         </div>
