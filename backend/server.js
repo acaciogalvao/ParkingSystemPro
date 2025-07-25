@@ -255,6 +255,9 @@ app.post('/api/vehicles/entry', async (req, res) => {
         // Create vehicle entry
         const vehicleId = uuidv4();
         const entryTime = new Date();
+        
+        // Convert to Brazil timezone (GMT-3)
+        const brazilTime = new Date(entryTime.toLocaleString("en-US", {timeZone: "America/Sao_Paulo"}));
 
         const vehicleData = {
             id: vehicleId,
