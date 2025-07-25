@@ -419,14 +419,14 @@ export default function ParkingSystem() {
                         {spot.id.split('-')[1]}
                       </span>
                       {spot.isOccupied && spot.vehicle && (
-                        <div className="absolute inset-0 bg-red-500/95 rounded-lg flex flex-col items-center justify-center text-white text-[9px] p-0.5 leading-tight">
-                          <div className="font-bold text-[10px] truncate w-full text-center mb-0.5">
+                        <div className="absolute inset-0 bg-red-500/95 rounded-lg flex flex-col items-center justify-center text-white p-0.5 leading-tight">
+                          <div className="font-bold text-[9px] truncate w-full text-center mb-0.5 leading-tight">
                             {spot.vehicle.plate}
                           </div>
-                          <div className="text-[8px] font-mono">
+                          <div className="text-[7px] font-mono leading-none">
                             <Timer 
                               entryTime={spot.vehicle.entryTime} 
-                              className="text-[8px] text-white"
+                              className="text-[7px] text-white leading-none"
                               vehicleType="car"
                             />
                           </div>
