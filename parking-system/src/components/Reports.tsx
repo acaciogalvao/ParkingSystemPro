@@ -13,54 +13,94 @@ import {
   Pie,
   Cell
 } from "recharts";
-import { formatBrazilianCurrency } from "@/utils/formatters";
+import { formatBrazilianCurrency, formatCurrencyBR } from "@/utils/formatters";
+import { exportReport } from "@/utils/exportUtils";
 import { 
   TrendingUp, 
   DollarSign, 
   Car, 
   Clock, 
   Download,
-  Calendar
+  Calendar,
+  Loader2
 } from "lucide-react";
+import { useState, useEffect } from "react";
 
 export function Reports() {
-  // Dados simulados para os gráficos
-  const revenueData = [
-    { day: 'Seg', revenue: 580 },
-    { day: 'Ter', revenue: 720 },
-    { day: 'Qua', revenue: 490 },
-    { day: 'Qui', revenue: 840 },
-    { day: 'Sex', revenue: 950 },
-    { day: 'Sáb', revenue: 1200 },
-    { day: 'Dom', revenue: 800 }
-  ];
+  const [reportsData, setReportsData] = useState<any>(null);
+  const [dashboardStats, setDashboardStats] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [exportLoading, setExportLoading] = useState<string | null>(null);
 
-  const occupancyData = [
-    { hour: '08:00', occupancy: 25 },
-    { hour: '09:00', occupancy: 45 },
-    { hour: '10:00', occupancy: 65 },
-    { hour: '11:00', occupancy: 80 },
-    { hour: '12:00', occupancy: 90 },
-    { hour: '13:00', occupancy: 85 },
-    { hour: '14:00', occupancy: 75 },
-    { hour: '15:00', occupancy: 70 },
-    { hour: '16:00', occupancy: 85 },
-    { hour: '17:00', occupancy: 95 },
-    { hour: '18:00', occupancy: 80 },
-    { hour: '19:00', occupancy: 60 }
-  ];
+  const backendUrl = import.meta.env.VITE_BACKEND_URL || '/api';
 
-  const vehicleTypeData = [
-    { name: 'Carros', value: 78, color: '#3B82F6' },
-    { name: 'Motos', value: 22, color: '#10B981' }
-  ];
+  // Fetch real data
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        
+        // Fetch dashboard stats
+        const statsResponse = await fetch(`${backendUrl}/dashboard/stats`);
+        const statsData = await statsResponse.json();
+        setDashboardStats(statsData);
+        
+        // Fetch monthly reports
+        const reportsResponse = await fetch(`${backendUrl}/reports/monthly`);
+        const reportsResult = await reportsResponse.json();
+        setReportsData(reportsResult.data);
+        
+        setLoading(false);
+      } catch (error) {
+        console.error('Error fetching reports data:', error);
+        setLoading(false);
+      }
+    };
 
-  const monthlyStats = {
-    totalRevenue: 18750.50,
-    totalVehicles: 2847,
-    avgOccupancy: 67.3,
-    avgStayTime: '3h 45min'
+    fetchData();
+  }, [backendUrl]);
+
+  // Handle export
+  const handleExport = async (format: 'pdf' | 'excel' | 'csv') => {
+    try {
+      setExportLoading(format);
+      await exportReport(format);
+      
+      // Show success message
+      alert(`Relatório exportado com sucesso em formato ${format.toUpperCase()}!`);
+    } catch (error) {
+      console.error('Error exporting report:', error);
+      alert('Erro ao exportar relatório. Tente novamente.');
+    } finally {
+      setExportLoading(null);
+    }
   };
+
+  // Process data for charts
+  const processedData = reportsData ? {
+    revenueData: Object.entries(reportsData.dailyRevenue || {}).map(([date, revenue]) => ({
+      day: new Date(date).toLocaleDateString('pt-BR', { weekday: 'short' }),
+      revenue: revenue as number
+    })).slice(-7),
+    
+    entriesData: Object.entries(reportsData.dailyEntries || {}).map(([date, entries]) => ({
+      day: new Date(date).toLocaleDateString('pt-BR', { weekday: 'short' }),
+      entries: entries as number
+    })).slice(-7),
+    
+    vehicleTypeData: dashboardStats ? [
+      { name: 'Carros', value: dashboardStats.totalCarsParked, color: '#3B82F6' },
+      { name: 'Motos', value: dashboardStats.totalMotorcyclesParked, color: '#10B981' }
+    ] : []
+  } : null;
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="px-4 space-y-4">
