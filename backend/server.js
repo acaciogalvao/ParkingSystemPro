@@ -426,6 +426,7 @@ app.post('/api/vehicles/exit', async (req, res) => {
 
         // Calculate duration and fee based on vehicle type (no minimum fee, starts from 0)
         const durationMinutes = (exitTime - entryTime) / (1000 * 60);
+        const durationHours = durationMinutes / 60;
         // Cars: R$10/hour = R$0.1667/min, Motorcycles: R$7/hour = R$0.1167/min
         const ratePerMinute = vehicle.type === 'car' ? (10 / 60) : (7 / 60);
         const fee = durationMinutes * ratePerMinute;
