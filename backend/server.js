@@ -306,6 +306,7 @@ app.post('/api/vehicles/entry', async (req, res) => {
                 vehicleId: vehicleId,
                 spot: spot,
                 entryTime: entryTime.toLocaleTimeString('pt-BR', { 
+                    timeZone: 'America/Sao_Paulo',
                     hour: '2-digit', 
                     minute: '2-digit' 
                 })
