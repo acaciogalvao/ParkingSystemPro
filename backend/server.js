@@ -295,6 +295,47 @@ async function createPixPayment(amount, payerData, vehicleId) {
     }
 }
 
+// Credit/Debit Card Payment Helper Functions
+async function createCardPayment(amount, payerData, cardData, vehicleId) {
+    try {
+        const paymentData = {
+            transaction_amount: amount,
+            token: cardData.cardToken,
+            description: `Pagamento de estacionamento - Veículo ${vehicleId}`,
+            installments: cardData.paymentType === 'credit' ? cardData.installments : 1,
+            payment_method_id: cardData.paymentType === 'credit' ? 'credit_card' : 'debit_card',
+            payer: {
+                first_name: payerData.name.split(' ')[0],
+                last_name: payerData.name.split(' ').slice(1).join(' ') || payerData.name.split(' ')[0],
+                email: payerData.email,
+                identification: {
+                    type: 'CPF',
+                    number: payerData.cpf.replace(/\D/g, '')
+                },
+                phone: {
+                    area_code: payerData.phone ? payerData.phone.replace(/\D/g, '').slice(0, 2) : '11',
+                    number: payerData.phone ? payerData.phone.replace(/\D/g, '').slice(2) : '999999999'
+                }
+            },
+            external_reference: vehicleId,
+            notification_url: `${process.env.WEBHOOK_URL || 'https://your-domain.com'}/api/webhook/mercadopago`
+        };
+
+        const payment = await paymentClient.create({
+            body: paymentData,
+            requestOptions: {
+                idempotencyKey: uuidv4()
+            }
+        });
+
+        console.log('Card Payment created:', payment);
+        return payment;
+    } catch (error) {
+        console.error('Error creating card payment:', error);
+        throw error;
+    }
+}
+
 function validateCPF(cpf) {
     cpf = cpf.replace(/\D/g, '');
     
