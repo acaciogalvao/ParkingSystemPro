@@ -76,6 +76,20 @@ const vehicleExitSchema = Joi.object({
     exitTime: Joi.string().optional().description('Exit time')
 });
 
+// PIX payment schemas
+const pixPaymentSchema = Joi.object({
+    vehicleId: Joi.string().required().description('Vehicle ID'),
+    payerEmail: Joi.string().email().required().description('Payer email'),
+    payerName: Joi.string().required().description('Payer full name'),
+    payerCPF: Joi.string().required().description('Payer CPF'),
+    payerPhone: Joi.string().optional().description('Payer phone')
+});
+
+const paymentConfirmationSchema = Joi.object({
+    paymentId: Joi.string().required().description('Payment ID'),
+    vehicleId: Joi.string().required().description('Vehicle ID')
+});
+
 // Helper functions
 function validateBrazilianPlate(plate) {
     if (!plate) {
