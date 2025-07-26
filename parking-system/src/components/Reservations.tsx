@@ -623,7 +623,13 @@ export function Reservations() {
           </Card>
         ) : (
           filteredReservations.map(reservation => (
-            <Card key={reservation.id}>
+            <Card 
+              key={reservation.id} 
+              className={`transition-all duration-200 cursor-pointer hover:shadow-md ${
+                reservation.status === 'pending_payment' ? 'hover:bg-yellow-50 border-yellow-200' : 'hover:bg-gray-50'
+              }`}
+              onClick={() => handleReservationClick(reservation)}
+            >
               <CardHeader>
                 <div className="flex justify-between items-start">
                   <div>
