@@ -26,6 +26,17 @@ import {
   Copy
 } from "lucide-react";
 
+interface ReservationPixPayment {
+  paymentId: string;
+  amount: number;
+  formattedAmount: string;
+  pixCode: string;
+  pixCodeBase64: string;
+  ticketUrl?: string;
+  expiresAt: string;
+  reservationId: string;
+}
+
 interface Reservation {
   id: string;
   vehicleType: 'car' | 'motorcycle';
