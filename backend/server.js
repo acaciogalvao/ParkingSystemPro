@@ -298,6 +298,29 @@ async function createPixPayment(amount, payerData, vehicleId) {
 // Credit/Debit Card Payment Helper Functions
 async function createCardPayment(amount, payerData, cardData, vehicleId) {
     try {
+        // In demo mode, simulate payment response
+        const isDemoMode = process.env.NODE_ENV !== 'production' || process.env.MP_ACCESS_TOKEN?.includes('TEST');
+        
+        if (isDemoMode) {
+            // Simulate MercadoPago response for demo
+            console.log('DEMO MODE: Simulating card payment approval');
+            const simulatedPayment = {
+                id: `demo_payment_${Date.now()}`,
+                status: 'approved',
+                status_detail: 'approved',
+                transaction_amount: amount,
+                payment_method_id: cardData.paymentType === 'credit' ? 'credit_card' : 'debit_card',
+                payment_type_id: cardData.paymentType,
+                date_approved: new Date().toISOString(),
+                date_created: new Date().toISOString(),
+                external_reference: vehicleId
+            };
+            
+            console.log('Simulated Card Payment created:', simulatedPayment);
+            return simulatedPayment;
+        }
+
+        // Real MercadoPago integration for production
         const paymentData = {
             transaction_amount: amount,
             token: cardData.cardToken,
