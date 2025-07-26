@@ -56,9 +56,12 @@ export function VehicleSearch() {
 
   // Handle search input change with plate validation
   const handleSearchChange = (value: string) => {
-    // Check if it looks like a plate to apply formatting
-    if (looksLikePlate(value)) {
-      const formattedValue = formatPlateInput(value);
+    // Always format input to uppercase first
+    const upperValue = value.toUpperCase();
+    
+    // Check if it looks like a plate to apply plate-specific formatting
+    if (looksLikePlate(upperValue)) {
+      const formattedValue = formatPlateInput(upperValue);
       const validation = validateBrazilianPlate(formattedValue);
       setPlateValidation(validation);
       setSearchTerm(formattedValue);
@@ -69,15 +72,15 @@ export function VehicleSearch() {
         performSearch(formattedValue);
       }
     } else {
-      // Regular text search
-      setSearchTerm(value);
+      // Regular text search - but still keep uppercase for consistency
+      setSearchTerm(upperValue);
       setPlateValidation({ isValid: false, type: null, error: null });
       setIsPlateSearch(false);
       
       // Auto-search for text with 3+ characters
-      if (value.trim().length >= 3) {
-        performSearch(value);
-      } else if (value.trim().length === 0) {
+      if (upperValue.trim().length >= 3) {
+        performSearch(upperValue);
+      } else if (upperValue.trim().length === 0) {
         // Reset to show all vehicles when search is cleared
         fetchAllVehicles();
       }
