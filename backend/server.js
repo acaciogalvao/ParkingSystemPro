@@ -96,7 +96,7 @@ const reservationSchema = Joi.object({
     plate: Joi.string().required().description('License plate'),
     ownerName: Joi.string().required().description('Owner name'),
     ownerPhone: Joi.string().required().description('Owner phone'),
-    reservationDate: Joi.string().isodate().required().description('Reservation date'),
+    reservationDate: Joi.string().required().description('Reservation date'),
     reservationTime: Joi.string().pattern(/^([01]\d|2[0-3]):([0-5]\d)$/).required().description('Reservation time (HH:MM)'),
     duration: Joi.number().integer().min(1).max(12).required().description('Duration in hours'),
     payerEmail: Joi.string().email().required().description('Payer email'),
