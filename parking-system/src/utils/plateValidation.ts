@@ -49,8 +49,9 @@ export const validateBrazilianPlate = (plate: string): PlateValidationResult => 
 /**
  * Formata a entrada da placa durante a digitação
  * Aplica formatação automática para o formato antigo (adiciona hífen)
+ * Converte automaticamente para maiúsculas
  * @param value - Valor digitado pelo usuário
- * @returns Valor formatado
+ * @returns Valor formatado em maiúsculas
  */
 export const formatPlateInput = (value: string): string => {
   // Remove caracteres não permitidos e converte para maiúsculo
