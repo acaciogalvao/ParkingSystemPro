@@ -1153,6 +1153,35 @@ app.get('/api/reports/export', async (req, res) => {
         const totalEntries = operations.filter(op => op.type === 'entry').length;
         const totalExits = operations.filter(op => op.type === 'exit').length;
         
+        // Payment methods analysis
+        const paymentMethods = {
+            cash: 0,
+            pix: 0,
+            credit_card: 0,
+            debit_card: 0
+        };
+        
+        exitedVehicles.forEach(v => {
+            const method = v.paymentMethod || 'cash';
+            if (method === 'cash' || method === 'Dinheiro') {
+                paymentMethods.cash += (v.fee || 0);
+            } else if (method === 'pix' || method === 'PIX') {
+                paymentMethods.pix += (v.fee || 0);
+            } else if (method === 'credit_card' || method === 'Cartão de Crédito') {
+                paymentMethods.credit_card += (v.fee || 0);
+            } else if (method === 'debit_card' || method === 'Cartão de Débito') {
+                paymentMethods.debit_card += (v.fee || 0);
+            }
+        });
+        
+        // Count transactions by payment method
+        const paymentMethodCounts = {
+            cash: exitedVehicles.filter(v => !v.paymentMethod || v.paymentMethod === 'cash' || v.paymentMethod === 'Dinheiro').length,
+            pix: exitedVehicles.filter(v => v.paymentMethod === 'pix' || v.paymentMethod === 'PIX').length,
+            credit_card: exitedVehicles.filter(v => v.paymentMethod === 'credit_card' || v.paymentMethod === 'Cartão de Crédito').length,
+            debit_card: exitedVehicles.filter(v => v.paymentMethod === 'debit_card' || v.paymentMethod === 'Cartão de Débito').length
+        };
+        
         // Group data by date
         const dailyData = {};
         operations.forEach(op => {
