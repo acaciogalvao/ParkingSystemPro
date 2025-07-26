@@ -3,6 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Toaster } from "@/components/ui/toast";
 import { VehicleEntry } from "@/components/VehicleEntry";
 import { VehicleSearch } from "@/components/VehicleSearch";
 import { Reports } from "@/components/Reports";
