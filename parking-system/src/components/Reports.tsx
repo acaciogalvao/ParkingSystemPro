@@ -1,6 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   BarChart, 
   Bar, 
@@ -22,11 +23,15 @@ import {
   Clock, 
   Download,
   Calendar,
-  Loader2
+  Loader2,
+  BarChart3,
+  List
 } from "lucide-react";
 import { useState, useEffect } from "react";
+import { VehicleTimesReport } from "./VehicleTimesReport";
 
 export function Reports() {
+  const [activeTab, setActiveTab] = useState("statistics");
   const [reportsData, setReportsData] = useState<any>(null);
   const [dashboardStats, setDashboardStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
