@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Comprehensive Backend API Tests for ParkSystem Pro - Payment Methods Focus
-Tests payment method functionality as requested in review
+Comprehensive Backend API Tests for ParkSystem Pro - Reservation System Focus
+Tests reservation system endpoints as requested in review
 """
 
 import requests
