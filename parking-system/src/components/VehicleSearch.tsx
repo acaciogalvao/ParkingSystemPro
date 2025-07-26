@@ -397,14 +397,25 @@ export function VehicleSearch() {
                   </Dialog>
                   
                   <Button 
-                    variant="destructive" 
+                    variant="default" 
+                    size="sm" 
+                    onClick={() => handlePixPayment(vehicle)}
+                    disabled={processing}
+                    className="flex items-center gap-1 bg-green-600 hover:bg-green-700"
+                  >
+                    <CreditCard className="w-3 h-3" />
+                    PIX
+                  </Button>
+
+                  <Button 
+                    variant="outline" 
                     size="sm" 
                     onClick={() => handleExit(vehicle)}
                     disabled={processing}
                     className="flex items-center gap-1"
                   >
-                    <LogOut className="w-3 h-3" />
-                    {processing ? 'Processando...' : 'Saída'}
+                    <DollarSign className="w-3 h-3" />
+                    {processing ? 'Processando...' : 'Dinheiro'}
                   </Button>
                 </div>
               </div>
