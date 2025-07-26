@@ -1614,6 +1614,16 @@ app.post('/api/payments/pix/create', async (req, res) => {
         const durationMinutes = (exitTime - entryTime) / (1000 * 60);
         const ratePerMinute = vehicle.type === 'car' ? (10 / 60) : (7 / 60);
         const fee = Math.max(durationMinutes * ratePerMinute, 1); // Minimum R$1
+        
+        console.log('PIX Payment calculation:', {
+            vehicleId,
+            entryTime: vehicle.entryTime,
+            exitTime: exitTime.toISOString(),
+            durationMinutes,
+            ratePerMinute,
+            fee,
+            feeRounded: parseFloat(fee.toFixed(2))
+        });
 
         // Create PIX payment
         const payerData = {
