@@ -247,7 +247,7 @@ export function Reservations() {
     }
 
     try {
-      const response = await fetch(`/api/reservations/${reservationId}/cancel`, {
+      const response = await fetch(`${backendUrl}/reservations/${reservationId}/cancel`, {
         method: 'POST',
       });
 
