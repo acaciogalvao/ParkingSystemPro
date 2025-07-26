@@ -178,20 +178,58 @@ export function VehicleSearch() {
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
-            <div className="flex gap-2">
-              <Input
-                placeholder="Digite a placa, nome ou modelo..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="h-12"
-                onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-              />
-              <Button onClick={handleSearch} className="h-12 px-6">
-                <Search className="w-4 h-4" />
-              </Button>
+            <div className="space-y-2">
+              <div className="flex gap-2">
+                <Input
+                  placeholder="Digite a placa, nome ou modelo..."
+                  value={searchTerm}
+                  onChange={(e) => handleSearchChange(e.target.value)}
+                  maxLength={isPlateSearch ? 8 : undefined}
+                  className={`h-12 ${
+                    isPlateSearch 
+                      ? plateValidation.error 
+                        ? 'border-red-500 focus:border-red-500 focus:ring-red-500' 
+                        : plateValidation.isValid 
+                        ? 'border-green-500 focus:border-green-500 focus:ring-green-500' 
+                        : ''
+                      : ''
+                  } ${isPlateSearch ? 'text-center font-mono tracking-wider' : ''}`}
+                  onKeyPress={(e) => e.key === 'Enter' && performSearch(searchTerm)}
+                />
+                <Button onClick={() => performSearch(searchTerm)} className="h-12 px-6">
+                  <Search className="w-4 h-4" />
+                </Button>
+              </div>
+              
+              {/* Plate validation feedback */}
+              {isPlateSearch && (
+                <div className="space-y-1">
+                  {plateValidation.error && (
+                    <p className="text-sm text-red-600 flex items-center gap-1">
+                      <AlertCircle className="w-4 h-4" />
+                      {plateValidation.error}
+                    </p>
+                  )}
+                  {plateValidation.isValid && plateValidation.type && (
+                    <p className="text-sm text-green-600 flex items-center gap-1">
+                      <CheckCircle className="w-4 h-4" />
+                      Placa válida (formato {plateValidation.type})
+                    </p>
+                  )}
+                  {!plateValidation.error && !plateValidation.isValid && searchTerm.length > 0 && (
+                    <p className="text-xs text-gray-500">
+                      Formatos aceitos: ABC-1234 (antigo) ou ABC1A12 (Mercosul)
+                    </p>
+                  )}
+                </div>
+              )}
             </div>
+            
             <div className="text-xs text-gray-600">
               {loading ? 'Carregando...' : `${filteredVehicles.length} veículo${filteredVehicles.length !== 1 ? 's' : ''} encontrado${filteredVehicles.length !== 1 ? 's' : ''}`}
+              {isPlateSearch && plateValidation.isValid && (
+                <span className="text-green-600 ml-2">• Busca por placa ativa</span>
+              )}
             </div>
           </div>
         </CardContent>
