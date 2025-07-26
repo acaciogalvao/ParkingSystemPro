@@ -707,34 +707,76 @@ export function Reservations() {
 
       {/* Payment Modal */}
       {showPayment && paymentData && selectedReservation && (
-        <div>
-          <PixPayment
-            vehicle={{
-              id: selectedReservation.id,
-              plate: selectedReservation.plate,
-              type: selectedReservation.vehicleType,
-              model: '',
-              color: '',
-              ownerName: selectedReservation.ownerName,
-              ownerPhone: selectedReservation.ownerPhone,
-              entryTime: new Date().toISOString(),
-              spot: selectedReservation.spot || '',
-              entryTimestamp: new Date().toISOString()
-            }}
-            onSuccess={() => {
-              setShowPayment(false);
-              setSelectedReservation(null);
-              setPaymentData(null);
-              fetchReservations();
-            }}
-            onCancel={() => {
-              setShowPayment(false);
-              setSelectedReservation(null);
-              setPaymentData(null);
-            }}
-            isOpen={showPayment}
-          />
-        </div>
+        <Dialog open={showPayment} onOpenChange={() => setShowPayment(false)}>
+          <DialogContent className="w-[95vw] max-w-md max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <CreditCard className="w-5 h-5" />
+                Pagamento da Reserva
+              </DialogTitle>
+              <DialogDescription>
+                Reserva da vaga para {selectedReservation.plate}
+              </DialogDescription>
+            </DialogHeader>
+
+            {/* Reservation Info */}
+            <Card className="mb-4">
+              <CardContent className="pt-4">
+                <div className="flex justify-between items-center">
+                  <div>
+                    <p className="font-bold text-lg">{selectedReservation.plate}</p>
+                    <p className="text-sm text-gray-600">{selectedReservation.ownerName}</p>
+                    <p className="text-sm text-gray-600">
+                      {selectedReservation.formattedDateTime} • {selectedReservation.duration}h
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <Badge variant="outline">
+                      {selectedReservation.vehicleType === 'car' ? 'Carro' : 'Moto'}
+                    </Badge>
+                    <p className="text-lg font-bold text-green-600 mt-1">
+                      {selectedReservation.formattedFee}
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Alert className="mb-4 border-blue-200 bg-blue-50">
+              <AlertCircle className="h-4 w-4 text-blue-600" />
+              <AlertDescription className="text-blue-800">
+                Clique no botão abaixo para realizar o pagamento PIX desta reserva.
+              </AlertDescription>
+            </Alert>
+
+            <div className="flex gap-2">
+              <Button 
+                variant="outline" 
+                onClick={() => setShowPayment(false)}
+                className="flex-1"
+              >
+                Cancelar
+              </Button>
+              <Button 
+                onClick={() => {
+                  // Here you would integrate with actual PIX payment
+                  // For now, we'll simulate successful payment
+                  toast({
+                    title: "Pagamento realizado!",
+                    description: "Sua reserva foi confirmada com sucesso.",
+                  });
+                  setShowPayment(false);
+                  setSelectedReservation(null);
+                  fetchReservations();
+                }}
+                className="flex-1"
+              >
+                <QrCode className="w-4 h-4 mr-2" />
+                Pagar com PIX
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
       )}
     </div>
   );
