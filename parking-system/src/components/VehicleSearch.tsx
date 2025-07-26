@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Timer } from "@/components/Timer";
 import { PixPayment } from "@/components/PixPayment";
+import { CardPayment } from "@/components/CardPayment";
 import { Car, Bike, Search, Clock, DollarSign, LogOut, CheckCircle, AlertCircle, CreditCard } from "lucide-react";
 import { validateBrazilianPlate, formatPlateInput, looksLikePlate, shouldAutoSearch, type PlateValidationResult } from "@/utils/plateValidation";
 
