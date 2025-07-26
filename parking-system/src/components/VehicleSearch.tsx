@@ -467,6 +467,16 @@ export function VehicleSearch() {
           isOpen={isPixPaymentOpen}
         />
       )}
+
+      {/* Card Payment Modal */}
+      {cardPaymentVehicle && (
+        <CardPayment
+          vehicle={cardPaymentVehicle}
+          onSuccess={handleCardPaymentSuccess}
+          onCancel={handleCardPaymentCancel}
+          isOpen={isCardPaymentOpen}
+        />
+      )}
     </div>
   );
 }
