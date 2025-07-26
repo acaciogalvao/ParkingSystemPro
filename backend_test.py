@@ -474,6 +474,228 @@ class ParkSystemTester:
                 
         except Exception as e:
             self.add_result("Operations History", False, f"Request error: {str(e)}")
+
+    def test_vehicle_times_report(self):
+        """Test the new vehicle times report endpoint - MAIN FOCUS as requested"""
+        print_test_header("NOVO RELATÓRIO DE HORÁRIOS - FOCO PRINCIPAL")
+        
+        # Test 1: Basic vehicle times report
+        print_info("1. Testando endpoint básico /api/reports/vehicle-times...")
+        try:
+            response = requests.get(f"{self.base_url}/api/reports/vehicle-times", timeout=15)
+            
+            if response.status_code == 200:
+                data = response.json()
+                if data.get("success") and "data" in data:
+                    report_data = data["data"]
+                    
+                    # Check required sections
+                    required_sections = ["vehicles", "summary", "pagination"]
+                    missing_sections = [section for section in required_sections if section not in report_data]
+                    
+                    if not missing_sections:
+                        vehicles = report_data["vehicles"]
+                        summary = report_data["summary"]
+                        pagination = report_data["pagination"]
+                        
+                        print_success(f"✅ Estrutura do relatório de horários completa")
+                        print_info(f"Veículos encontrados: {len(vehicles)}")
+                        print_info(f"Total no período: {summary.get('totalVehicles', 0)}")
+                        print_info(f"Estacionados: {summary.get('parkedVehicles', 0)}")
+                        print_info(f"Saíram: {summary.get('exitedVehicles', 0)}")
+                        print_info(f"Receita total: {summary.get('formattedRevenue', 'N/A')}")
+                        
+                        # Validate vehicle data structure
+                        if vehicles:
+                            sample_vehicle = vehicles[0]
+                            required_vehicle_fields = ["id", "plate", "type", "model", "color", "ownerName", "spot", "status", "entryTime"]
+                            missing_vehicle_fields = [field for field in required_vehicle_fields if field not in sample_vehicle]
+                            
+                            if not missing_vehicle_fields:
+                                print_success("✅ Estrutura de dados dos veículos válida")
+                                print_info(f"Exemplo: {sample_vehicle['plate']} - {sample_vehicle['status']} - Vaga {sample_vehicle['spot']}")
+                                
+                                # Check if duration data is present for parked vehicles
+                                if sample_vehicle['status'] == 'parked' and sample_vehicle.get('duration'):
+                                    duration = sample_vehicle['duration']
+                                    if 'hours' in duration and 'minutes' in duration:
+                                        print_success("✅ Dados de duração em tempo real presentes")
+                                    else:
+                                        print_warning("⚠️ Estrutura de duração incompleta")
+                                
+                                self.add_result("Relatório de Horários - Básico", True, 
+                                              f"Endpoint funcionando com {len(vehicles)} veículos")
+                            else:
+                                print_warning(f"⚠️ Campos faltando nos veículos: {missing_vehicle_fields}")
+                                self.add_result("Relatório de Horários - Básico", False, 
+                                              f"Campos faltando: {missing_vehicle_fields}")
+                        else:
+                            print_info("Nenhum veículo no período (válido)")
+                            self.add_result("Relatório de Horários - Básico", True, 
+                                          "Endpoint funcionando (sem veículos no período)")
+                    else:
+                        print_error(f"❌ Seções faltando: {missing_sections}")
+                        self.add_result("Relatório de Horários - Básico", False, 
+                                      f"Seções faltando: {missing_sections}")
+                else:
+                    print_error(f"❌ Formato de resposta inválido: {data}")
+                    self.add_result("Relatório de Horários - Básico", False, "Formato de resposta inválido")
+            else:
+                print_error(f"❌ Erro HTTP {response.status_code}: {response.text}")
+                self.add_result("Relatório de Horários - Básico", False, f"HTTP {response.status_code}")
+                
+        except Exception as e:
+            print_error(f"❌ Erro na requisição: {str(e)}")
+            self.add_result("Relatório de Horários - Básico", False, f"Erro: {str(e)}")
+        
+        # Test 2: Test with filters
+        print_info("2. Testando filtros do relatório de horários...")
+        self.test_vehicle_times_filters()
+        
+        # Test 3: Test date range
+        print_info("3. Testando range de datas...")
+        self.test_vehicle_times_date_range()
+    
+    def test_vehicle_times_filters(self):
+        """Test vehicle times report with different filters"""
+        filter_tests = [
+            {
+                "name": "Filtro por Carros",
+                "params": {"vehicleType": "car"},
+                "description": "Apenas carros"
+            },
+            {
+                "name": "Filtro por Motos", 
+                "params": {"vehicleType": "motorcycle"},
+                "description": "Apenas motocicletas"
+            },
+            {
+                "name": "Filtro por Estacionados",
+                "params": {"status": "parked"},
+                "description": "Apenas veículos estacionados"
+            },
+            {
+                "name": "Filtro por Saídos",
+                "params": {"status": "exited"},
+                "description": "Apenas veículos que saíram"
+            },
+            {
+                "name": "Filtro Combinado",
+                "params": {"vehicleType": "car", "status": "parked"},
+                "description": "Carros estacionados"
+            }
+        ]
+        
+        for test in filter_tests:
+            try:
+                response = requests.get(
+                    f"{self.base_url}/api/reports/vehicle-times",
+                    params=test["params"],
+                    timeout=15
+                )
+                
+                if response.status_code == 200:
+                    data = response.json()
+                    if data.get("success") and "data" in data:
+                        vehicles = data["data"]["vehicles"]
+                        
+                        # Validate filter was applied
+                        filter_valid = True
+                        if "vehicleType" in test["params"]:
+                            expected_type = test["params"]["vehicleType"]
+                            wrong_types = [v for v in vehicles if v.get("type") != expected_type]
+                            if wrong_types:
+                                filter_valid = False
+                                print_error(f"❌ Filtro de tipo falhou: encontrados {len(wrong_types)} veículos do tipo errado")
+                        
+                        if "status" in test["params"]:
+                            expected_status = test["params"]["status"]
+                            wrong_status = [v for v in vehicles if v.get("status") != expected_status]
+                            if wrong_status:
+                                filter_valid = False
+                                print_error(f"❌ Filtro de status falhou: encontrados {len(wrong_status)} veículos com status errado")
+                        
+                        if filter_valid:
+                            print_success(f"✅ {test['name']}: {len(vehicles)} veículos retornados")
+                            self.add_result(f"Filtros - {test['name']}", True, 
+                                          f"Filtro aplicado corretamente: {len(vehicles)} resultados")
+                        else:
+                            self.add_result(f"Filtros - {test['name']}", False, "Filtro não aplicado corretamente")
+                    else:
+                        print_error(f"❌ {test['name']}: Resposta inválida")
+                        self.add_result(f"Filtros - {test['name']}", False, "Resposta inválida")
+                else:
+                    print_error(f"❌ {test['name']}: HTTP {response.status_code}")
+                    self.add_result(f"Filtros - {test['name']}", False, f"HTTP {response.status_code}")
+                    
+            except Exception as e:
+                print_error(f"❌ {test['name']}: Erro {str(e)}")
+                self.add_result(f"Filtros - {test['name']}", False, f"Erro: {str(e)}")
+    
+    def test_vehicle_times_date_range(self):
+        """Test vehicle times report with date range"""
+        try:
+            # Test with last 3 days
+            end_date = datetime.now().strftime('%Y-%m-%d')
+            start_date = (datetime.now() - timedelta(days=3)).strftime('%Y-%m-%d')
+            
+            params = {
+                "startDate": start_date,
+                "endDate": end_date,
+                "limit": 20
+            }
+            
+            response = requests.get(
+                f"{self.base_url}/api/reports/vehicle-times",
+                params=params,
+                timeout=15
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                if data.get("success") and "data" in data:
+                    summary = data["data"]["summary"]
+                    vehicles = data["data"]["vehicles"]
+                    
+                    # Check if period is correct
+                    period = summary.get("period", {})
+                    if period.get("start") and period.get("end"):
+                        print_success(f"✅ Range de datas aplicado: {period['start']} a {period['end']}")
+                        print_info(f"Veículos no período: {len(vehicles)}")
+                        
+                        # Validate vehicles are within date range
+                        date_valid = True
+                        for vehicle in vehicles:
+                            entry_timestamp = vehicle.get("entryTimestamp")
+                            if entry_timestamp:
+                                entry_date = datetime.fromisoformat(entry_timestamp.replace('Z', '+00:00'))
+                                start_datetime = datetime.strptime(start_date, '%Y-%m-%d')
+                                end_datetime = datetime.strptime(end_date, '%Y-%m-%d') + timedelta(days=1)
+                                
+                                if not (start_datetime <= entry_date <= end_datetime):
+                                    date_valid = False
+                                    break
+                        
+                        if date_valid:
+                            print_success("✅ Todos os veículos estão dentro do range de datas")
+                            self.add_result("Range de Datas", True, 
+                                          f"Filtro de data funcionando: {len(vehicles)} veículos no período")
+                        else:
+                            print_warning("⚠️ Alguns veículos fora do range de datas")
+                            self.add_result("Range de Datas", False, "Veículos fora do range de datas")
+                    else:
+                        print_error("❌ Informações de período não retornadas")
+                        self.add_result("Range de Datas", False, "Período não informado na resposta")
+                else:
+                    print_error("❌ Resposta inválida para range de datas")
+                    self.add_result("Range de Datas", False, "Resposta inválida")
+            else:
+                print_error(f"❌ Erro HTTP {response.status_code} para range de datas")
+                self.add_result("Range de Datas", False, f"HTTP {response.status_code}")
+                
+        except Exception as e:
+            print_error(f"❌ Erro no teste de range de datas: {str(e)}")
+            self.add_result("Range de Datas", False, f"Erro: {str(e)}")
     
     def test_vehicle_exit(self):
         """Test vehicle exit functionality"""
