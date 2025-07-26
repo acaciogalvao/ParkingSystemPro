@@ -1331,21 +1331,29 @@ class ParkSystemTester:
         """Test complete card payment system as requested"""
         print_test_header("TESTE COMPLETO DO SISTEMA DE PAGAMENTOS COM CARTÃO")
         
-        # 1. Test vehicle registration first (need a vehicle to test payment)
-        print_info("1. Registrando veículo de teste DEF-5678...")
-        test_vehicle = {
-            "plate": "DEF-5678",
-            "type": "car",
-            "model": "Toyota Corolla",
-            "color": "Branco",
-            "ownerName": "João Silva",
-            "ownerPhone": "(11) 99999-9999"
-        }
+        # 1. First check if DEF-5678 already exists
+        print_info("1. Verificando se veículo DEF-5678 já existe...")
+        existing_vehicle = self.find_existing_vehicle("DEF-5678")
         
-        vehicle_id = self.register_test_vehicle(test_vehicle)
-        if not vehicle_id:
-            self.add_result("Sistema de Pagamento com Cartão", False, "Falha ao registrar veículo de teste")
-            return
+        if existing_vehicle:
+            print_success(f"✅ Veículo DEF-5678 encontrado - usando veículo existente")
+            vehicle_id = existing_vehicle["id"]
+        else:
+            # Register new test vehicle
+            print_info("1. Registrando veículo de teste DEF-5678...")
+            test_vehicle = {
+                "plate": "DEF-5678",
+                "type": "car",
+                "model": "Toyota Corolla",
+                "color": "Branco",
+                "ownerName": "João Silva",
+                "ownerPhone": "(11) 99999-9999"
+            }
+            
+            vehicle_id = self.register_test_vehicle(test_vehicle)
+            if not vehicle_id:
+                self.add_result("Sistema de Pagamento com Cartão", False, "Falha ao registrar veículo de teste")
+                return
         
         # 2. Test card payment creation - Credit
         print_info("2. Testando pagamento com cartão de crédito...")
@@ -1394,8 +1402,23 @@ class ParkSystemTester:
         print_info("6. Comparando com sistema PIX...")
         self.compare_payment_methods(vehicle_id)
         
-        # Clean up - remove test vehicle
-        self.cleanup_test_vehicle(vehicle_id)
+        # Note: Don't clean up existing vehicle DEF-5678 as it's part of the demo data
+        if not existing_vehicle:
+            self.cleanup_test_vehicle(vehicle_id)
+    
+    def find_existing_vehicle(self, plate):
+        """Find existing vehicle by plate"""
+        try:
+            response = requests.get(f"{self.base_url}/api/vehicles", timeout=10)
+            if response.status_code == 200:
+                vehicles = response.json()
+                for vehicle in vehicles:
+                    if vehicle["plate"] == plate:
+                        return vehicle
+            return None
+        except Exception as e:
+            print_error(f"❌ Erro ao buscar veículo existente: {str(e)}")
+            return None
     
     def register_test_vehicle(self, vehicle_data):
         """Register a test vehicle for payment testing"""
