@@ -1327,18 +1327,328 @@ class ParkSystemTester:
         else:
             print(f"{Colors.RED}{Colors.BOLD}🚨 CRITICAL! Backend API has significant issues.{Colors.ENDC}")
 
+    def test_card_payment_system(self):
+        """Test complete card payment system as requested"""
+        print_test_header("TESTE COMPLETO DO SISTEMA DE PAGAMENTOS COM CARTÃO")
+        
+        # 1. Test vehicle registration first (need a vehicle to test payment)
+        print_info("1. Registrando veículo de teste DEF-5678...")
+        test_vehicle = {
+            "plate": "DEF-5678",
+            "type": "car",
+            "model": "Toyota Corolla",
+            "color": "Branco",
+            "ownerName": "João Silva",
+            "ownerPhone": "(11) 99999-9999"
+        }
+        
+        vehicle_id = self.register_test_vehicle(test_vehicle)
+        if not vehicle_id:
+            self.add_result("Sistema de Pagamento com Cartão", False, "Falha ao registrar veículo de teste")
+            return
+        
+        # 2. Test card payment creation - Credit
+        print_info("2. Testando pagamento com cartão de crédito...")
+        credit_payment_data = {
+            "vehicleId": vehicle_id,
+            "payerEmail": "teste@exemplo.com",
+            "payerName": "João Silva",
+            "payerCPF": "11144477735",
+            "payerPhone": "(11) 99999-9999",
+            "cardToken": "card_token_demo_123456789",
+            "cardBrand": "visa",
+            "cardLastFourDigits": "1111",
+            "paymentType": "credit",
+            "installments": 3
+        }
+        
+        credit_result = self.test_card_payment_creation(credit_payment_data, "crédito")
+        
+        # 3. Test card payment creation - Debit
+        print_info("3. Testando pagamento com cartão de débito...")
+        debit_payment_data = {
+            "vehicleId": vehicle_id,
+            "payerEmail": "teste@exemplo.com",
+            "payerName": "João Silva",
+            "payerCPF": "11144477735",
+            "payerPhone": "(11) 99999-9999",
+            "cardToken": "card_token_demo_987654321",
+            "cardBrand": "mastercard",
+            "cardLastFourDigits": "5555",
+            "paymentType": "debit",
+            "installments": 1
+        }
+        
+        debit_result = self.test_card_payment_creation(debit_payment_data, "débito")
+        
+        # 4. Test payment status endpoint
+        print_info("4. Testando verificação de status do pagamento...")
+        if credit_result and credit_result.get("payment_id"):
+            self.test_card_payment_status(credit_result["payment_id"])
+        
+        # 5. Test validation errors
+        print_info("5. Testando validações de entrada...")
+        self.test_card_payment_validations(vehicle_id)
+        
+        # 6. Test comparison with PIX
+        print_info("6. Comparando com sistema PIX...")
+        self.compare_payment_methods(vehicle_id)
+        
+        # Clean up - remove test vehicle
+        self.cleanup_test_vehicle(vehicle_id)
+    
+    def register_test_vehicle(self, vehicle_data):
+        """Register a test vehicle for payment testing"""
+        try:
+            response = requests.post(
+                f"{self.base_url}/api/vehicles/entry",
+                json=vehicle_data,
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                result = response.json()
+                if result.get("success"):
+                    vehicle_id = result["data"]["vehicleId"]
+                    print_success(f"✅ Veículo {vehicle_data['plate']} registrado com ID: {vehicle_id}")
+                    return vehicle_id
+                else:
+                    print_error(f"❌ Falha no registro: {result}")
+                    return None
+            else:
+                print_error(f"❌ Erro HTTP {response.status_code}: {response.text}")
+                return None
+                
+        except Exception as e:
+            print_error(f"❌ Erro ao registrar veículo: {str(e)}")
+            return None
+    
+    def test_card_payment_creation(self, payment_data, payment_type):
+        """Test card payment creation"""
+        try:
+            response = requests.post(
+                f"{self.base_url}/api/payments/card/create",
+                json=payment_data,
+                timeout=15
+            )
+            
+            if response.status_code == 200:
+                result = response.json()
+                if result.get("success"):
+                    payment_info = result["data"]
+                    print_success(f"✅ Pagamento com cartão de {payment_type} criado com sucesso")
+                    print_info(f"   ID do pagamento: {payment_info.get('paymentId', 'N/A')}")
+                    print_info(f"   Status: {payment_info.get('status', 'N/A')}")
+                    print_info(f"   Valor: R$ {payment_info.get('amount', 'N/A')}")
+                    print_info(f"   Método: {payment_info.get('paymentMethod', 'N/A')}")
+                    
+                    if payment_data["paymentType"] == "credit":
+                        print_info(f"   Parcelas: {payment_data['installments']}x")
+                    
+                    self.add_result(f"Pagamento Cartão {payment_type.title()}", True, 
+                                  f"Pagamento criado com sucesso - Status: {payment_info.get('status')}")
+                    
+                    return {
+                        "success": True,
+                        "payment_id": payment_info.get("paymentId"),
+                        "status": payment_info.get("status"),
+                        "amount": payment_info.get("amount")
+                    }
+                else:
+                    print_error(f"❌ Falha na criação do pagamento: {result.get('error', 'Erro desconhecido')}")
+                    self.add_result(f"Pagamento Cartão {payment_type.title()}", False, 
+                                  f"Falha na criação: {result.get('error')}")
+                    return {"success": False}
+            else:
+                error_text = response.text
+                print_error(f"❌ Erro HTTP {response.status_code}: {error_text}")
+                self.add_result(f"Pagamento Cartão {payment_type.title()}", False, 
+                              f"HTTP {response.status_code}: {error_text}")
+                return {"success": False}
+                
+        except Exception as e:
+            print_error(f"❌ Erro na requisição: {str(e)}")
+            self.add_result(f"Pagamento Cartão {payment_type.title()}", False, f"Erro de requisição: {str(e)}")
+            return {"success": False}
+    
+    def test_card_payment_status(self, payment_id):
+        """Test card payment status endpoint"""
+        try:
+            response = requests.get(
+                f"{self.base_url}/api/payments/card/status/{payment_id}",
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                result = response.json()
+                if result.get("success"):
+                    status_info = result["data"]
+                    print_success(f"✅ Status do pagamento obtido com sucesso")
+                    print_info(f"   Status: {status_info.get('status', 'N/A')}")
+                    print_info(f"   Valor: R$ {status_info.get('amount', 'N/A')}")
+                    
+                    self.add_result("Status Pagamento Cartão", True, 
+                                  f"Status obtido: {status_info.get('status')}")
+                    return True
+                else:
+                    print_error(f"❌ Falha ao obter status: {result.get('error')}")
+                    self.add_result("Status Pagamento Cartão", False, f"Falha: {result.get('error')}")
+                    return False
+            else:
+                print_error(f"❌ Erro HTTP {response.status_code}: {response.text}")
+                self.add_result("Status Pagamento Cartão", False, f"HTTP {response.status_code}")
+                return False
+                
+        except Exception as e:
+            print_error(f"❌ Erro na requisição: {str(e)}")
+            self.add_result("Status Pagamento Cartão", False, f"Erro: {str(e)}")
+            return False
+    
+    def test_card_payment_validations(self, vehicle_id):
+        """Test card payment validation errors"""
+        validation_tests = [
+            {
+                "name": "CPF Inválido",
+                "data": {
+                    "vehicleId": vehicle_id,
+                    "payerEmail": "teste@exemplo.com",
+                    "payerName": "João Silva",
+                    "payerCPF": "12345678901",  # Invalid CPF
+                    "cardToken": "card_token_demo",
+                    "cardBrand": "visa",
+                    "cardLastFourDigits": "1111",
+                    "paymentType": "credit"
+                },
+                "expected_error": True
+            },
+            {
+                "name": "Dados Obrigatórios Faltando",
+                "data": {
+                    "vehicleId": vehicle_id,
+                    "payerEmail": "teste@exemplo.com",
+                    # Missing payerName, payerCPF, etc.
+                    "cardToken": "card_token_demo",
+                    "cardBrand": "visa",
+                    "cardLastFourDigits": "1111",
+                    "paymentType": "credit"
+                },
+                "expected_error": True
+            },
+            {
+                "name": "Veículo Inexistente",
+                "data": {
+                    "vehicleId": "invalid-vehicle-id",
+                    "payerEmail": "teste@exemplo.com",
+                    "payerName": "João Silva",
+                    "payerCPF": "11144477735",
+                    "cardToken": "card_token_demo",
+                    "cardBrand": "visa",
+                    "cardLastFourDigits": "1111",
+                    "paymentType": "credit"
+                },
+                "expected_error": True
+            }
+        ]
+        
+        for test in validation_tests:
+            try:
+                response = requests.post(
+                    f"{self.base_url}/api/payments/card/create",
+                    json=test["data"],
+                    timeout=10
+                )
+                
+                if test["expected_error"]:
+                    if response.status_code != 200 or not response.json().get("success", True):
+                        print_success(f"✅ Validação '{test['name']}' funcionando corretamente")
+                        self.add_result(f"Validação {test['name']}", True, "Erro detectado corretamente")
+                    else:
+                        print_error(f"❌ Validação '{test['name']}' falhou - deveria retornar erro")
+                        self.add_result(f"Validação {test['name']}", False, "Erro não detectado")
+                        
+            except Exception as e:
+                print_error(f"❌ Erro testando validação '{test['name']}': {str(e)}")
+                self.add_result(f"Validação {test['name']}", False, f"Erro: {str(e)}")
+    
+    def compare_payment_methods(self, vehicle_id):
+        """Compare card payment with PIX payment"""
+        try:
+            # Test PIX payment creation for comparison
+            pix_data = {
+                "vehicleId": vehicle_id,
+                "payerEmail": "teste@exemplo.com",
+                "payerName": "João Silva",
+                "payerCPF": "11144477735",
+                "payerPhone": "(11) 99999-9999"
+            }
+            
+            pix_response = requests.post(
+                f"{self.base_url}/api/payments/pix/create",
+                json=pix_data,
+                timeout=10
+            )
+            
+            card_data = {
+                "vehicleId": vehicle_id,
+                "payerEmail": "teste@exemplo.com",
+                "payerName": "João Silva",
+                "payerCPF": "11144477735",
+                "cardToken": "card_token_demo",
+                "cardBrand": "visa",
+                "cardLastFourDigits": "1111",
+                "paymentType": "credit"
+            }
+            
+            card_response = requests.post(
+                f"{self.base_url}/api/payments/card/create",
+                json=card_data,
+                timeout=10
+            )
+            
+            pix_success = pix_response.status_code == 200 and pix_response.json().get("success", False)
+            card_success = card_response.status_code == 200 and card_response.json().get("success", False)
+            
+            if pix_success and card_success:
+                print_success("✅ Ambos os métodos de pagamento (PIX e Cartão) funcionam")
+                self.add_result("Comparação PIX vs Cartão", True, "Ambos os métodos funcionam")
+            elif card_success:
+                print_warning("⚠️ Cartão funciona, mas PIX pode ter problemas")
+                self.add_result("Comparação PIX vs Cartão", True, "Cartão funciona, PIX com problemas")
+            else:
+                print_error("❌ Problemas nos métodos de pagamento")
+                self.add_result("Comparação PIX vs Cartão", False, "Problemas nos métodos de pagamento")
+                
+        except Exception as e:
+            print_error(f"❌ Erro na comparação: {str(e)}")
+            self.add_result("Comparação PIX vs Cartão", False, f"Erro: {str(e)}")
+    
+    def cleanup_test_vehicle(self, vehicle_id):
+        """Clean up test vehicle"""
+        try:
+            response = requests.post(
+                f"{self.base_url}/api/vehicles/exit",
+                json={"vehicleId": vehicle_id},
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                print_success("✅ Veículo de teste removido com sucesso")
+            else:
+                print_warning("⚠️ Não foi possível remover veículo de teste")
+                
+        except Exception as e:
+            print_warning(f"⚠️ Erro ao limpar veículo de teste: {str(e)}")
+
 def main():
     """Main test execution"""
     tester = ParkSystemTester()
     
-    # Test the new export functionality as requested by user
-    tester.test_reports_export_endpoint()
+    # Test the card payment system as requested
+    tester.test_card_payment_system()
     
-    # Also test existing endpoints that support export functionality
+    # Also test basic health and functionality
     tester.test_health_check()
-    tester.test_monthly_report()
     tester.test_dashboard_stats()
-    tester.test_operations_history()
     
     # Print summary
     tester.print_summary()
