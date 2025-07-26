@@ -45,10 +45,12 @@ export function Reports() {
         const statsData = await statsResponse.json();
         setDashboardStats(statsData);
         
-        // Fetch monthly reports
-        const reportsResponse = await fetch(`${backendUrl}/reports/monthly`);
+        // Fetch monthly reports with payment method data
+        const reportsResponse = await fetch(`${backendUrl}/reports/export`);
         const reportsResult = await reportsResponse.json();
-        setReportsData(reportsResult.data);
+        if (reportsResult.success) {
+          setReportsData(reportsResult.data);
+        }
         
         setLoading(false);
       } catch (error) {
