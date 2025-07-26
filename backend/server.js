@@ -2592,6 +2592,109 @@ app.post('/api/reservations/:reservationId/cancel', async (req, res) => {
     }
 });
 
+// Create PIX payment for reservation
+app.post('/api/reservations/:reservationId/create-pix-payment', async (req, res) => {
+    try {
+        const { reservationId } = req.params;
+        const { payerEmail, payerName, payerCPF, payerPhone } = req.body;
+
+        // Validate CPF
+        if (!validateCPF(payerCPF)) {
+            return res.status(400).json({ 
+                success: false, 
+                error: 'CPF inválido' 
+            });
+        }
+
+        // Get reservation details
+        const reservationsCollection = db.collection('reservations');
+        const reservation = await reservationsCollection.findOne({ id: reservationId });
+
+        if (!reservation) {
+            return res.status(404).json({ 
+                success: false, 
+                error: 'Reserva não encontrada' 
+            });
+        }
+
+        if (reservation.status !== 'pending_payment') {
+            return res.status(400).json({ 
+                success: false, 
+                error: 'Esta reserva não está pendente de pagamento' 
+            });
+        }
+
+        // Create PIX payment
+        const payerData = {
+            name: payerName,
+            email: payerEmail,
+            cpf: payerCPF,
+            phone: payerPhone || ''
+        };
+
+        const payment = await createPixPayment(reservation.fee, payerData, reservationId);
+
+        // Store payment info in database
+        const paymentsCollection = db.collection('payments');
+        const paymentRecord = {
+            id: uuidv4(),
+            paymentId: payment.id,
+            reservationId: reservationId,
+            vehicleId: null, // This is for a reservation, not a parked vehicle
+            plate: reservation.plate,
+            amount: reservation.fee,
+            status: 'pending',
+            pixCode: payment.point_of_interaction?.transaction_data?.qr_code,
+            pixCodeBase64: payment.point_of_interaction?.transaction_data?.qr_code_base64,
+            ticketUrl: payment.point_of_interaction?.transaction_data?.ticket_url,
+            payerEmail: payerEmail,
+            payerName: payerName,
+            payerCPF: payerCPF,
+            createdAt: new Date().toISOString(),
+            expiresAt: new Date(Date.now() + 30 * 60 * 1000).toISOString() // 30 minutes
+        };
+
+        await paymentsCollection.insertOne(paymentRecord);
+
+        // Update reservation with payment ID
+        await reservationsCollection.updateOne(
+            { id: reservationId },
+            { 
+                $set: { 
+                    paymentId: payment.id,
+                    paymentCreatedAt: new Date().toISOString()
+                } 
+            }
+        );
+
+        res.json({
+            success: true,
+            data: {
+                paymentId: payment.id,
+                amount: reservation.fee,
+                formattedAmount: `R$ ${formatBrazilianCurrency(reservation.fee)}`,
+                pixCode: payment.point_of_interaction?.transaction_data?.qr_code,
+                pixCodeBase64: payment.point_of_interaction?.transaction_data?.qr_code_base64,
+                ticketUrl: payment.point_of_interaction?.transaction_data?.ticket_url,
+                expiresAt: paymentRecord.expiresAt,
+                reservationId: reservationId,
+                reservation: {
+                    plate: reservation.plate,
+                    vehicleType: reservation.vehicleType,
+                    ownerName: reservation.ownerName
+                }
+            }
+        });
+
+    } catch (error) {
+        console.error('Error creating reservation PIX payment:', error);
+        res.status(500).json({ 
+            success: false, 
+            error: 'Erro ao criar pagamento PIX: ' + error.message 
+        });
+    }
+});
+
 // Confirm reservation payment
 app.post('/api/reservations/:reservationId/confirm-payment', async (req, res) => {
     try {
