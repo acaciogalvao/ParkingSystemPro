@@ -22,7 +22,8 @@ import {
   CheckCircle,
   XCircle,
   Loader2,
-  QrCode
+  QrCode,
+  Copy
 } from "lucide-react";
 
 interface Reservation {
