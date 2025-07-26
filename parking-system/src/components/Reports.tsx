@@ -260,6 +260,48 @@ export function Reports() {
         </Card>
       )}
 
+      {/* Payment Methods Distribution - Mobile */}
+      {reportsData?.paymentMethods && (
+        <Card className="p-4">
+          <h3 className="font-semibold mb-3 text-sm">Distribuição por Forma de Pagamento</h3>
+          <div className="space-y-3">
+            {Object.entries(reportsData.paymentMethods).map(([method, data]) => {
+              const methodNames = {
+                cash: 'Dinheiro',
+                pix: 'PIX',
+                credit_card: 'Cartão de Crédito',
+                debit_card: 'Cartão de Débito'
+              };
+              const colors = {
+                cash: '#10B981',
+                pix: '#8B5CF6',
+                credit_card: '#F59E0B',
+                debit_card: '#EF4444'
+              };
+              
+              if (data.count === 0) return null;
+              
+              return (
+                <div key={method} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                  <div className="flex items-center gap-3">
+                    <div 
+                      className="w-4 h-4 rounded"
+                      style={{ backgroundColor: colors[method] }}
+                    ></div>
+                    <span className="text-sm font-medium">{methodNames[method]}</span>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-sm font-bold">{data.count} transações</div>
+                    <div className="text-xs text-gray-600">{formatCurrencyBR(data.revenue)}</div>
+                    <div className="text-xs text-gray-500">{data.percentage.toFixed(1)}%</div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </Card>
+      )}
+
       {/* Export Options - Mobile */}
       <Card className="p-4">
         <h3 className="font-semibold mb-3 text-sm">Exportar Relatórios</h3>
