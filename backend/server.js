@@ -90,6 +90,20 @@ const paymentConfirmationSchema = Joi.object({
     vehicleId: Joi.string().required().description('Vehicle ID')
 });
 
+// Credit/Debit card payment schemas
+const cardPaymentSchema = Joi.object({
+    vehicleId: Joi.string().required().description('Vehicle ID'),
+    payerEmail: Joi.string().email().required().description('Payer email'),
+    payerName: Joi.string().required().description('Payer full name'),
+    payerCPF: Joi.string().required().description('Payer CPF'),
+    payerPhone: Joi.string().optional().description('Payer phone'),
+    cardToken: Joi.string().required().description('Card token from frontend'),
+    cardBrand: Joi.string().required().description('Card brand (visa, mastercard, etc)'),
+    cardLastFourDigits: Joi.string().length(4).required().description('Last 4 digits of card'),
+    paymentType: Joi.string().valid('credit', 'debit').required().description('Payment type'),
+    installments: Joi.number().integer().min(1).max(12).default(1).description('Number of installments (credit only)')
+});
+
 // Helper functions
 function validateBrazilianPlate(plate) {
     if (!plate) {
