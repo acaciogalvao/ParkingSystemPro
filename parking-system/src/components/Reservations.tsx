@@ -78,6 +78,12 @@ export function Reservations() {
   const [showPayment, setShowPayment] = useState(false);
   const [selectedReservation, setSelectedReservation] = useState<Reservation | null>(null);
   const [paymentData, setPaymentData] = useState<any>(null);
+  const [pixPaymentData, setPixPaymentData] = useState<ReservationPixPayment | null>(null);
+  const [pixLoading, setPixLoading] = useState(false);
+  const [pixError, setPixError] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
+  const [timeLeft, setTimeLeft] = useState<number>(0);
+  const [paymentStep, setPaymentStep] = useState<'form' | 'qr' | 'checking'>('form');
   const [newReservation, setNewReservation] = useState<NewReservation>({
     vehicleType: 'car',
     plate: '',
