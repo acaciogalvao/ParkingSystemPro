@@ -10,8 +10,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { toast } from "@/components/ui/use-toast";
 import { formatPlateInput, validateBrazilianPlate } from "@/utils/plateValidation";
-import { PixPayment } from "@/components/PixPayment";
-import { CardPayment } from "@/components/CardPayment";
 import { 
   Calendar, 
   Clock, 
