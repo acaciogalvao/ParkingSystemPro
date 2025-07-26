@@ -401,8 +401,76 @@ export function Reservations() {
           owner: reservation.ownerName
         }
       });
+      setPaymentStep('form');
+      setPixPaymentData(null);
+      setPixError(null);
       setShowPayment(true);
     }
+  };
+
+  const createReservationPixPayment = async () => {
+    if (!selectedReservation) return;
+
+    setPixLoading(true);
+    setPixError(null);
+
+    try {
+      const response = await fetch(`${backendUrl}/payments/pix/create`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          vehicleId: selectedReservation.id, // Using reservation ID as vehicle ID for this case
+          payerEmail: 'reserva@email.com', // You may want to collect this from user
+          payerName: selectedReservation.ownerName,
+          payerCPF: '00000000000', // You may want to collect this from user
+          payerPhone: selectedReservation.ownerPhone
+        }),
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        setPixPaymentData({
+          ...result.data,
+          reservationId: selectedReservation.id
+        });
+        setPaymentStep('qr');
+      } else {
+        setPixError(result.error || 'Erro ao criar pagamento PIX');
+      }
+    } catch (error) {
+      console.error('Error creating PIX payment:', error);
+      setPixError('Erro de conexão. Tente novamente.');
+    } finally {
+      setPixLoading(false);
+    }
+  };
+
+  const copyPixCode = async () => {
+    if (pixPaymentData?.pixCode) {
+      try {
+        await navigator.clipboard.writeText(pixPaymentData.pixCode);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+        toast({
+          title: "Código copiado!",
+          description: "Código PIX copiado para a área de transferência.",
+        });
+      } catch (error) {
+        console.error('Error copying to clipboard:', error);
+        toast({
+          title: "Erro ao copiar",
+          description: "Não foi possível copiar o código PIX.",
+          variant: "destructive"
+        });
+      }
+    }
+  };
+
+  const formatTime = (milliseconds: number): string => {
+    const minutes = Math.floor(milliseconds / 60000);
+    const seconds = Math.floor((milliseconds % 60000) / 1000);
+    return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
   };
 
   const getMinDateTime = () => {
