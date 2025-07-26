@@ -64,31 +64,68 @@ export function VehicleSearch() {
     return () => clearInterval(interval);
   }, [backendUrl]);
 
-  // Search vehicles
-  const handleSearch = async () => {
-    if (!searchTerm.trim()) {
-      // If no search term, fetch all vehicles with duration
-      try {
-        const response = await fetch(`${backendUrl}/vehicles/with-duration`);
-        if (response.ok) {
-          const data = await response.json();
-          setVehicles(data);
-        }
-      } catch (error) {
-        console.error('Error fetching vehicles:', error);
+  // Handle search input change with plate validation
+  const handleSearchChange = (value: string) => {
+    // Check if it looks like a plate to apply formatting
+    if (looksLikePlate(value)) {
+      const formattedValue = formatPlateInput(value);
+      const validation = validateBrazilianPlate(formattedValue);
+      setPlateValidation(validation);
+      setSearchTerm(formattedValue);
+      setIsPlateSearch(true);
+      
+      // Auto-search for valid complete plates
+      if (shouldAutoSearch(formattedValue, validation)) {
+        performSearch(formattedValue);
       }
+    } else {
+      // Regular text search
+      setSearchTerm(value);
+      setPlateValidation({ isValid: false, type: null, error: null });
+      setIsPlateSearch(false);
+      
+      // Auto-search for text with 3+ characters
+      if (value.trim().length >= 3) {
+        performSearch(value);
+      } else if (value.trim().length === 0) {
+        // Reset to show all vehicles when search is cleared
+        fetchAllVehicles();
+      }
+    }
+  };
+
+  // Separate function to perform search
+  const performSearch = async (term: string) => {
+    if (!term.trim()) {
+      await fetchAllVehicles();
       return;
     }
 
     try {
       setLoading(true);
-      const response = await fetch(`${backendUrl}/vehicles/search?plate=${encodeURIComponent(searchTerm)}&owner=${encodeURIComponent(searchTerm)}`);
+      const response = await fetch(`${backendUrl}/vehicles/search?plate=${encodeURIComponent(term)}&owner=${encodeURIComponent(term)}`);
       if (response.ok) {
         const result = await response.json();
         setVehicles(result.data);
       }
     } catch (error) {
       console.error('Error searching vehicles:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Function to fetch all vehicles
+  const fetchAllVehicles = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch(`${backendUrl}/vehicles/with-duration`);
+      if (response.ok) {
+        const data = await response.json();
+        setVehicles(data);
+      }
+    } catch (error) {
+      console.error('Error fetching vehicles:', error);
     } finally {
       setLoading(false);
     }
