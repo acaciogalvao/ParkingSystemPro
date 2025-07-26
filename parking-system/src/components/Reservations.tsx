@@ -64,6 +64,7 @@ export function Reservations() {
   const [creating, setCreating] = useState(false);
   const [showNewReservation, setShowNewReservation] = useState(false);
   const [showPayment, setShowPayment] = useState(false);
+  const [selectedReservation, setSelectedReservation] = useState<Reservation | null>(null);
   const [paymentData, setPaymentData] = useState<any>(null);
   const [newReservation, setNewReservation] = useState<NewReservation>({
     vehicleType: 'car',
@@ -79,6 +80,8 @@ export function Reservations() {
 
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [filterType, setFilterType] = useState<string>('all');
+
+  const backendUrl = import.meta.env.VITE_BACKEND_URL || '';
 
   useEffect(() => {
     fetchReservations();
