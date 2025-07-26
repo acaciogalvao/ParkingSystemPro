@@ -43,17 +43,7 @@ export function VehicleSearch() {
   // Fetch vehicles on component mount
   useEffect(() => {
     const fetchVehicles = async () => {
-      try {
-        const response = await fetch(`${backendUrl}/vehicles/with-duration`);
-        if (response.ok) {
-          const data = await response.json();
-          setVehicles(data);
-        }
-      } catch (error) {
-        console.error('Error fetching vehicles:', error);
-      } finally {
-        setLoading(false);
-      }
+      await fetchAllVehicles();
     };
 
     fetchVehicles();
