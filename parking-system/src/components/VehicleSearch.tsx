@@ -423,6 +423,16 @@ export function VehicleSearch() {
           ))
         )}
       </div>
+
+      {/* PIX Payment Modal */}
+      {pixPaymentVehicle && (
+        <PixPayment
+          vehicle={pixPaymentVehicle}
+          onSuccess={handlePixPaymentSuccess}
+          onCancel={handlePixPaymentCancel}
+          isOpen={isPixPaymentOpen}
+        />
+      )}
     </div>
   );
 }
