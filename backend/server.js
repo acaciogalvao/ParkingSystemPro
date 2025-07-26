@@ -615,7 +615,8 @@ app.post('/api/vehicles/exit', async (req, res) => {
                     status: 'exited',
                     exitTime: exitTime.toISOString(),
                     fee: fee,
-                    duration: durationHours
+                    duration: durationHours,
+                    paymentMethod: 'Dinheiro'
                 }
             }
         );
