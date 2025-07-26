@@ -41,6 +41,8 @@ export function VehicleSearch() {
   const [isPlateSearch, setIsPlateSearch] = useState(false);
   const [pixPaymentVehicle, setPixPaymentVehicle] = useState<Vehicle | null>(null);
   const [isPixPaymentOpen, setIsPixPaymentOpen] = useState(false);
+  const [cardPaymentVehicle, setCardPaymentVehicle] = useState<Vehicle | null>(null);
+  const [isCardPaymentOpen, setIsCardPaymentOpen] = useState(false);
 
   const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8001';
 
