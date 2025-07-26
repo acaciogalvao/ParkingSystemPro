@@ -994,8 +994,10 @@ class ParkSystemTester:
                         exit_data = exit_response.json()
                         if exit_data.get("success"):
                             print_success(f"✅ Saída processada com sucesso")
-                            print_info(f"Taxa: R$ {exit_data['data']['fee']:.2f}")
-                            print_info(f"Duração: {exit_data['data']['duration']:.2f}h")
+                            fee = float(exit_data['data']['fee']) if exit_data['data']['fee'] else 0.0
+                            duration = float(exit_data['data']['duration']) if exit_data['data']['duration'] else 0.0
+                            print_info(f"Taxa: R$ {fee:.2f}")
+                            print_info(f"Duração: {duration:.2f}h")
                             
                             # Verify payment method was saved by checking operations history
                             print_info("3. Verificando se método de pagamento foi salvo no histórico...")
