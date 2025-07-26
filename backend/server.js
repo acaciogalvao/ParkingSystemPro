@@ -1633,7 +1633,7 @@ app.post('/api/payments/pix/create', async (req, res) => {
             phone: payerPhone
         };
 
-        const payment = await createPixPayment(fee, payerData, vehicleId);
+        const payment = await createPixPayment(parseFloat(fee.toFixed(2)), payerData, vehicleId);
 
         // Store payment info in database
         const paymentsCollection = db.collection('payments');
