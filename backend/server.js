@@ -1220,7 +1220,29 @@ app.get('/api/reports/export', async (req, res) => {
                 currentlyParked: parkedVehicles.length,
                 averageRevenue: totalExits > 0 ? totalRevenue / totalExits : 0,
                 vehicleTypes: vehicleTypes,
-                occupancyRate: stats.occupancyRate
+                occupancyRate: stats.occupancyRate,
+                paymentMethods: {
+                    cash: {
+                        revenue: paymentMethods.cash,
+                        count: paymentMethodCounts.cash,
+                        percentage: totalRevenue > 0 ? (paymentMethods.cash / totalRevenue) * 100 : 0
+                    },
+                    pix: {
+                        revenue: paymentMethods.pix,
+                        count: paymentMethodCounts.pix,
+                        percentage: totalRevenue > 0 ? (paymentMethods.pix / totalRevenue) * 100 : 0
+                    },
+                    credit_card: {
+                        revenue: paymentMethods.credit_card,
+                        count: paymentMethodCounts.credit_card,
+                        percentage: totalRevenue > 0 ? (paymentMethods.credit_card / totalRevenue) * 100 : 0
+                    },
+                    debit_card: {
+                        revenue: paymentMethods.debit_card,
+                        count: paymentMethodCounts.debit_card,
+                        percentage: totalRevenue > 0 ? (paymentMethods.debit_card / totalRevenue) * 100 : 0
+                    }
+                }
             },
             dailyData: Object.values(dailyData).sort((a, b) => a.date.localeCompare(b.date)),
             operations: operations.map(op => {
