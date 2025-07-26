@@ -11,7 +11,7 @@ from datetime import datetime, timedelta
 import sys
 
 # Backend URL - Using public endpoint as per instructions
-BASE_URL = "/api"
+BASE_URL = "http://localhost:3000"
 
 class Colors:
     GREEN = '\033[92m'
