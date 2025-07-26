@@ -277,7 +277,7 @@ async function synchronizeParkingSpots() {
 async function createPixPayment(amount, payerData, vehicleId) {
     try {
         // In demo mode, simulate payment response
-        const isDemoMode = process.env.NODE_ENV !== 'production' || !process.env.MP_ACCESS_TOKEN || process.env.MP_ACCESS_TOKEN?.includes('TEST');
+        const isDemoMode = !process.env.MP_ACCESS_TOKEN || process.env.MP_ACCESS_TOKEN?.includes('TEST');
         
         if (isDemoMode) {
             // Simulate MercadoPago PIX response for demo
