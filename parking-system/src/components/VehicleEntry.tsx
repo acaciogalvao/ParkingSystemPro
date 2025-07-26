@@ -242,7 +242,7 @@ export function VehicleEntry({ onSuccess }: VehicleEntryProps) {
                 placeholder="ABC-1234 ou ABC1A12"
                 value={formData.plate}
                 onChange={(e) => handleInputChange('plate', e.target.value)}
-                maxLength={8}
+                maxLength={formData.plate.includes('-') ? 8 : 7}
                 className={`h-12 text-center text-lg font-mono tracking-wider ${
                   plateValidation.error 
                     ? 'border-red-500 focus:border-red-500 focus:ring-red-500' 
