@@ -1223,6 +1223,344 @@ async function getDashboardStats() {
     }
 }
 
+// PIX Payment Endpoints
+
+// Create PIX payment for vehicle exit
+app.post('/api/payments/pix/create', async (req, res) => {
+    try {
+        // Validate request body
+        const { error, value } = pixPaymentSchema.validate(req.body);
+        if (error) {
+            return res.status(400).json({ 
+                success: false, 
+                error: error.details[0].message 
+            });
+        }
+
+        const { vehicleId, payerEmail, payerName, payerCPF, payerPhone } = value;
+
+        // Validate CPF
+        if (!validateCPF(payerCPF)) {
+            return res.status(400).json({ 
+                success: false, 
+                error: 'CPF inválido' 
+            });
+        }
+
+        // Get vehicle details
+        const vehiclesCollection = db.collection('vehicles');
+        const vehicle = await vehiclesCollection.findOne({
+            id: vehicleId,
+            status: 'parked'
+        });
+
+        if (!vehicle) {
+            return res.status(404).json({ 
+                success: false, 
+                error: 'Veículo não encontrado ou não está estacionado' 
+            });
+        }
+
+        // Calculate fee
+        const exitTime = new Date();
+        const entryTime = new Date(vehicle.entryTime);
+        const durationMinutes = (exitTime - entryTime) / (1000 * 60);
+        const ratePerMinute = vehicle.type === 'car' ? (10 / 60) : (7 / 60);
+        const fee = Math.max(durationMinutes * ratePerMinute, 1); // Minimum R$1
+
+        // Create PIX payment
+        const payerData = {
+            name: payerName,
+            email: payerEmail,
+            cpf: payerCPF,
+            phone: payerPhone
+        };
+
+        const payment = await createPixPayment(fee, payerData, vehicleId);
+
+        // Store payment info in database
+        const paymentsCollection = db.collection('payments');
+        const paymentRecord = {
+            id: uuidv4(),
+            paymentId: payment.id,
+            vehicleId: vehicleId,
+            plate: vehicle.plate,
+            amount: fee,
+            status: 'pending',
+            pixCode: payment.point_of_interaction?.transaction_data?.qr_code,
+            pixCodeBase64: payment.point_of_interaction?.transaction_data?.qr_code_base64,
+            ticketUrl: payment.point_of_interaction?.transaction_data?.ticket_url,
+            payerEmail: payerEmail,
+            payerName: payerName,
+            payerCPF: payerCPF,
+            createdAt: new Date().toISOString(),
+            expiresAt: new Date(Date.now() + 30 * 60 * 1000).toISOString() // 30 minutes
+        };
+
+        await paymentsCollection.insertOne(paymentRecord);
+
+        res.json({
+            success: true,
+            data: {
+                paymentId: payment.id,
+                amount: fee,
+                formattedAmount: `R$ ${formatBrazilianCurrency(fee)}`,
+                pixCode: payment.point_of_interaction?.transaction_data?.qr_code,
+                pixCodeBase64: payment.point_of_interaction?.transaction_data?.qr_code_base64,
+                ticketUrl: payment.point_of_interaction?.transaction_data?.ticket_url,
+                expiresAt: paymentRecord.expiresAt,
+                vehicle: {
+                    plate: vehicle.plate,
+                    spot: vehicle.spot,
+                    type: vehicle.type
+                }
+            }
+        });
+
+    } catch (error) {
+        console.error('Error creating PIX payment:', error);
+        res.status(500).json({ 
+            success: false, 
+            error: 'Erro ao criar pagamento PIX: ' + error.message 
+        });
+    }
+});
+
+// Check PIX payment status
+app.get('/api/payments/pix/status/:paymentId', async (req, res) => {
+    try {
+        const { paymentId } = req.params;
+
+        // Get payment from Mercado Pago
+        const payment = await paymentClient.get({ id: paymentId });
+
+        // Update local database
+        const paymentsCollection = db.collection('payments');
+        await paymentsCollection.updateOne(
+            { paymentId: paymentId },
+            { 
+                $set: { 
+                    status: payment.status,
+                    updatedAt: new Date().toISOString()
+                } 
+            }
+        );
+
+        res.json({
+            success: true,
+            data: {
+                paymentId: paymentId,
+                status: payment.status,
+                statusDetail: payment.status_detail,
+                transactionAmount: payment.transaction_amount,
+                paidAmount: payment.transaction_details?.net_received_amount || 0,
+                paymentTypeId: payment.payment_type_id,
+                dateApproved: payment.date_approved,
+                dateCreated: payment.date_created
+            }
+        });
+
+    } catch (error) {
+        console.error('Error checking payment status:', error);
+        res.status(500).json({ 
+            success: false, 
+            error: 'Erro ao verificar status do pagamento: ' + error.message 
+        });
+    }
+});
+
+// Confirm PIX payment and process vehicle exit
+app.post('/api/payments/pix/confirm', async (req, res) => {
+    try {
+        // Validate request body
+        const { error, value } = paymentConfirmationSchema.validate(req.body);
+        if (error) {
+            return res.status(400).json({ 
+                success: false, 
+                error: error.details[0].message 
+            });
+        }
+
+        const { paymentId, vehicleId } = value;
+
+        // Get payment status from Mercado Pago
+        const payment = await paymentClient.get({ id: paymentId });
+
+        if (payment.status !== 'approved') {
+            return res.status(400).json({ 
+                success: false, 
+                error: 'Pagamento não foi aprovado ainda',
+                status: payment.status
+            });
+        }
+
+        // Process vehicle exit
+        const vehiclesCollection = db.collection('vehicles');
+        const vehicle = await vehiclesCollection.findOne({
+            id: vehicleId,
+            status: 'parked'
+        });
+
+        if (!vehicle) {
+            return res.status(404).json({ 
+                success: false, 
+                error: 'Veículo não encontrado' 
+            });
+        }
+
+        const exitTime = new Date();
+        const entryTime = new Date(vehicle.entryTime);
+        const durationHours = (exitTime - entryTime) / (1000 * 60 * 60);
+        const fee = payment.transaction_amount;
+
+        // Update vehicle status
+        await vehiclesCollection.updateOne(
+            { id: vehicleId },
+            {
+                $set: {
+                    status: 'exited',
+                    exitTime: exitTime.toISOString(),
+                    fee: fee,
+                    duration: durationHours,
+                    paymentId: paymentId,
+                    paymentMethod: 'pix'
+                }
+            }
+        );
+
+        // Free parking spot
+        const spotsCollection = db.collection('parking_spots');
+        await spotsCollection.updateOne(
+            { id: vehicle.spot },
+            {
+                $set: {
+                    isOccupied: false,
+                    vehicleId: null
+                }
+            }
+        );
+
+        // Update payment record
+        const paymentsCollection = db.collection('payments');
+        await paymentsCollection.updateOne(
+            { paymentId: paymentId },
+            { 
+                $set: { 
+                    status: 'confirmed',
+                    confirmedAt: exitTime.toISOString()
+                } 
+            }
+        );
+
+        // Log operation
+        const operationsCollection = db.collection('operations_history');
+        await operationsCollection.insertOne({
+            id: uuidv4(),
+            type: 'exit_with_pix',
+            vehicleId: vehicleId,
+            plate: vehicle.plate,
+            spot: vehicle.spot,
+            timestamp: exitTime.toISOString(),
+            data: {
+                entryTime: vehicle.entryTime,
+                exitTime: exitTime.toISOString(),
+                duration: durationHours,
+                fee: fee,
+                paymentId: paymentId,
+                paymentMethod: 'pix'
+            }
+        });
+
+        res.json({
+            success: true,
+            message: `Pagamento PIX confirmado! Saída processada para ${vehicle.plate}`,
+            data: {
+                plate: vehicle.plate,
+                spot: vehicle.spot,
+                duration: `${formatBrazilianDecimal(durationHours)}h`,
+                fee: `R$ ${formatBrazilianCurrency(fee)}`,
+                exitTime: exitTime.toLocaleTimeString('pt-BR', { 
+                    timeZone: 'America/Sao_Paulo',
+                    hour: '2-digit', 
+                    minute: '2-digit' 
+                }),
+                paymentId: paymentId,
+                paymentMethod: 'PIX'
+            }
+        });
+
+    } catch (error) {
+        console.error('Error confirming payment:', error);
+        res.status(500).json({ 
+            success: false, 
+            error: 'Erro ao confirmar pagamento: ' + error.message 
+        });
+    }
+});
+
+// Webhook for Mercado Pago notifications
+app.post('/api/webhook/mercadopago', async (req, res) => {
+    try {
+        const { type, data } = req.body;
+
+        console.log('Mercado Pago webhook received:', { type, data });
+
+        if (type === 'payment') {
+            const paymentId = data.id;
+            
+            // Get payment details
+            const payment = await paymentClient.get({ id: paymentId });
+            
+            // Update payment in database
+            const paymentsCollection = db.collection('payments');
+            await paymentsCollection.updateOne(
+                { paymentId: paymentId },
+                { 
+                    $set: { 
+                        status: payment.status,
+                        statusDetail: payment.status_detail,
+                        webhookUpdatedAt: new Date().toISOString()
+                    } 
+                }
+            );
+
+            console.log(`Payment ${paymentId} updated to status: ${payment.status}`);
+        }
+
+        res.status(200).json({ received: true });
+
+    } catch (error) {
+        console.error('Error processing webhook:', error);
+        res.status(500).json({ error: 'Webhook processing failed' });
+    }
+});
+
+// Get payment history
+app.get('/api/payments/history', async (req, res) => {
+    try {
+        const limit = parseInt(req.query.limit) || 50;
+        const paymentsCollection = db.collection('payments');
+
+        const payments = await paymentsCollection
+            .find({}, { projection: { _id: 0 } })
+            .sort({ createdAt: -1 })
+            .limit(limit)
+            .toArray();
+
+        res.json({
+            success: true,
+            data: payments
+        });
+
+    } catch (error) {
+        console.error('Error getting payment history:', error);
+        res.status(500).json({ 
+            success: false, 
+            error: 'Erro ao buscar histórico: ' + error.message 
+        });
+    }
+});
+
 // Error handling middleware
 app.use((error, req, res, next) => {
     console.error('Unhandled error:', error);
