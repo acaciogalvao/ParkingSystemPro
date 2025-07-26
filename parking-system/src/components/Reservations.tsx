@@ -101,6 +101,76 @@ export function Reservations() {
 
   const backendUrl = import.meta.env.VITE_BACKEND_URL || '';
 
+  // Countdown timer for PIX payment expiration
+  useEffect(() => {
+    if (pixPaymentData && paymentStep === 'qr') {
+      const expirationTime = new Date(pixPaymentData.expiresAt).getTime();
+      
+      const updateTimer = () => {
+        const now = new Date().getTime();
+        const timeLeft = Math.max(0, expirationTime - now);
+        setTimeLeft(timeLeft);
+        
+        if (timeLeft === 0) {
+          setPixError('Tempo de pagamento expirado. Gere um novo código PIX.');
+          setPaymentStep('form');
+          setPixPaymentData(null);
+        }
+      };
+      
+      updateTimer();
+      const interval = setInterval(updateTimer, 1000);
+      
+      return () => clearInterval(interval);
+    }
+  }, [pixPaymentData, paymentStep]);
+
+  // Poll payment status when in checking step
+  useEffect(() => {
+    if (paymentStep === 'checking' && pixPaymentData) {
+      const checkPaymentStatus = async () => {
+        try {
+          const response = await fetch(`${backendUrl}/payments/pix/status/${pixPaymentData.paymentId}`);
+          const result = await response.json();
+          
+          if (result.success && result.data.status === 'approved') {
+            // Confirm reservation payment
+            const confirmResponse = await fetch(`${backendUrl}/reservations/${pixPaymentData.reservationId}/confirm-payment`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                paymentId: pixPaymentData.paymentId
+              })
+            });
+            
+            const confirmResult = await confirmResponse.json();
+            
+            if (confirmResult.success) {
+              toast({
+                title: "Pagamento confirmado!",
+                description: "Sua reserva foi confirmada com sucesso.",
+              });
+              setShowPayment(false);
+              setSelectedReservation(null);
+              setPixPaymentData(null);
+              setPaymentStep('form');
+              fetchReservations();
+            } else {
+              setPixError(confirmResult.error || 'Erro ao confirmar pagamento');
+              setPaymentStep('qr');
+            }
+          }
+        } catch (error) {
+          console.error('Error checking payment status:', error);
+        }
+      };
+      
+      const interval = setInterval(checkPaymentStatus, 3000); // Check every 3 seconds
+      
+      return () => clearInterval(interval);
+    }
+  }, [paymentStep, pixPaymentData, backendUrl]);
+
   useEffect(() => {
     fetchReservations();
   }, []);
