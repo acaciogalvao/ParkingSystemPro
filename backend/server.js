@@ -1260,6 +1260,7 @@ app.get('/api/reports/export', async (req, res) => {
                     }),
                     fee: op.data?.fee || 0,
                     duration: op.data?.duration || 0,
+                    paymentMethod: op.data?.paymentMethod || (op.type === 'exit' ? 'Dinheiro' : ''),
                     timestamp: op.timestamp
                 };
             }),
