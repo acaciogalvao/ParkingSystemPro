@@ -4,6 +4,7 @@ import { MongoClient } from 'mongodb';
 import dotenv from 'dotenv';
 import Joi from 'joi';
 import { v4 as uuidv4 } from 'uuid';
+import { MercadoPagoConfig, Payment } from 'mercadopago';
 
 // Load environment variables
 dotenv.config();
