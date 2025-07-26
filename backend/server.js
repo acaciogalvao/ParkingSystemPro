@@ -1101,6 +1101,176 @@ app.get('/api/history', async (req, res) => {
     }
 });
 
+// Get detailed vehicle times report
+app.get('/api/reports/vehicle-times', async (req, res) => {
+    try {
+        const { startDate, endDate, vehicleType, status, limit } = req.query;
+        
+        // Default date range: last 7 days
+        let start = new Date();
+        start.setDate(start.getDate() - 7);
+        start.setHours(0, 0, 0, 0);
+        
+        let end = new Date();
+        end.setHours(23, 59, 59, 999);
+        
+        if (startDate) {
+            start = new Date(startDate);
+            start.setHours(0, 0, 0, 0);
+        }
+        
+        if (endDate) {
+            end = new Date(endDate);
+            end.setHours(23, 59, 59, 999);
+        }
+
+        const vehiclesCollection = db.collection('vehicles');
+        
+        // Build query
+        let query = {
+            entryTime: { 
+                $gte: start.toISOString(),
+                $lte: end.toISOString()
+            }
+        };
+        
+        // Add vehicle type filter
+        if (vehicleType && vehicleType !== 'all') {
+            query.type = vehicleType;
+        }
+        
+        // Add status filter
+        if (status && status !== 'all') {
+            query.status = status;
+        }
+
+        // Get vehicles with pagination
+        const maxLimit = parseInt(limit) || 100;
+        const vehicles = await vehiclesCollection
+            .find(query, { projection: { _id: 0 } })
+            .sort({ entryTime: -1 })
+            .limit(maxLimit)
+            .toArray();
+
+        // Format data for frontend
+        const formattedVehicles = vehicles.map(vehicle => {
+            const entryTime = new Date(vehicle.entryTime);
+            const exitTime = vehicle.exitTime ? new Date(vehicle.exitTime) : null;
+            const currentTime = new Date();
+            
+            // Calculate duration
+            let duration = null;
+            let durationFormatted = null;
+            let estimatedFee = null;
+            
+            if (vehicle.status === 'parked') {
+                // Still parked - calculate current duration
+                const durationMs = currentTime - entryTime;
+                const hours = Math.floor(durationMs / (1000 * 60 * 60));
+                const minutes = Math.floor((durationMs % (1000 * 60 * 60)) / (1000 * 60));
+                duration = { hours, minutes, totalMinutes: Math.floor(durationMs / (1000 * 60)) };
+                durationFormatted = `${hours}h ${minutes}m`;
+                
+                // Calculate estimated current fee
+                const durationMinutes = durationMs / (1000 * 60);
+                const ratePerMinute = vehicle.type === 'car' ? (10 / 60) : (7 / 60);
+                estimatedFee = durationMinutes * ratePerMinute;
+            } else if (vehicle.status === 'exited' && exitTime) {
+                // Already exited - use stored duration or calculate
+                if (vehicle.duration) {
+                    const hours = Math.floor(vehicle.duration);
+                    const minutes = Math.floor((vehicle.duration % 1) * 60);
+                    duration = { hours, minutes, totalMinutes: Math.floor(vehicle.duration * 60) };
+                    durationFormatted = `${hours}h ${minutes}m`;
+                } else {
+                    const durationMs = exitTime - entryTime;
+                    const hours = Math.floor(durationMs / (1000 * 60 * 60));
+                    const minutes = Math.floor((durationMs % (1000 * 60 * 60)) / (1000 * 60));
+                    duration = { hours, minutes, totalMinutes: Math.floor(durationMs / (1000 * 60)) };
+                    durationFormatted = `${hours}h ${minutes}m`;
+                }
+                estimatedFee = vehicle.fee || 0;
+            }
+            
+            return {
+                id: vehicle.id,
+                plate: vehicle.plate,
+                type: vehicle.type,
+                model: vehicle.model,
+                color: vehicle.color,
+                ownerName: vehicle.ownerName,
+                ownerPhone: vehicle.ownerPhone || '',
+                spot: vehicle.spot,
+                status: vehicle.status,
+                entryTime: entryTime.toLocaleString('pt-BR', { 
+                    timeZone: 'America/Sao_Paulo',
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                }),
+                exitTime: exitTime ? exitTime.toLocaleString('pt-BR', { 
+                    timeZone: 'America/Sao_Paulo',
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                }) : null,
+                entryTimestamp: vehicle.entryTime,
+                exitTimestamp: vehicle.exitTime || null,
+                duration: duration,
+                durationFormatted: durationFormatted,
+                fee: vehicle.fee || 0,
+                estimatedFee: estimatedFee,
+                formattedFee: `R$ ${formatBrazilianCurrency(estimatedFee || 0)}`,
+                paymentMethod: vehicle.paymentMethod || 'Pendente'
+            };
+        });
+
+        // Get summary statistics
+        const totalVehicles = formattedVehicles.length;
+        const parkedVehicles = formattedVehicles.filter(v => v.status === 'parked').length;
+        const exitedVehicles = formattedVehicles.filter(v => v.status === 'exited').length;
+        const totalRevenue = formattedVehicles
+            .filter(v => v.status === 'exited')
+            .reduce((sum, v) => sum + (v.fee || 0), 0);
+        
+        const summary = {
+            totalVehicles,
+            parkedVehicles,
+            exitedVehicles,
+            totalRevenue,
+            formattedRevenue: `R$ ${formatBrazilianCurrency(totalRevenue)}`,
+            period: {
+                start: start.toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' }),
+                end: end.toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' })
+            }
+        };
+
+        res.json({
+            success: true,
+            data: {
+                vehicles: formattedVehicles,
+                summary: summary,
+                pagination: {
+                    total: totalVehicles,
+                    limit: maxLimit,
+                    hasMore: totalVehicles === maxLimit
+                }
+            }
+        });
+
+    } catch (error) {
+        console.error('Error getting vehicle times report:', error);
+        res.status(500).json({ 
+            success: false,
+            detail: `Erro ao gerar relatório de horários: ${error.message}` 
+        });
+    }
+});
+
 // Get export data for reports
 app.get('/api/reports/export', async (req, res) => {
     try {
