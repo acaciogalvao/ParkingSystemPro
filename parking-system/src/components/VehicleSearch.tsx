@@ -165,6 +165,30 @@ export function VehicleSearch() {
     }
   };
 
+  // Open PIX payment modal
+  const handlePixPayment = (vehicle: Vehicle) => {
+    setPixPaymentVehicle(vehicle);
+    setIsPixPaymentOpen(true);
+  };
+
+  // Handle successful PIX payment
+  const handlePixPaymentSuccess = async () => {
+    setIsPixPaymentOpen(false);
+    setPixPaymentVehicle(null);
+    
+    // Refresh vehicles list
+    await fetchAllVehicles();
+    
+    // Show success message
+    alert('Pagamento PIX confirmado! Saída processada com sucesso.');
+  };
+
+  // Handle PIX payment cancellation
+  const handlePixPaymentCancel = () => {
+    setIsPixPaymentOpen(false);
+    setPixPaymentVehicle(null);
+  };
+
   // Filter vehicles based on current search term (for local filtering when needed)
   const filteredVehicles = vehicles.filter(vehicle => {
     if (!searchTerm.trim()) return true;
