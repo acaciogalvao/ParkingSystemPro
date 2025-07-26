@@ -276,6 +276,34 @@ async function synchronizeParkingSpots() {
 // PIX Payment Helper Functions
 async function createPixPayment(amount, payerData, vehicleId) {
     try {
+        // In demo mode, simulate payment response
+        const isDemoMode = process.env.NODE_ENV !== 'production' || !process.env.MP_ACCESS_TOKEN || process.env.MP_ACCESS_TOKEN?.includes('TEST');
+        
+        if (isDemoMode) {
+            // Simulate MercadoPago PIX response for demo
+            console.log('DEMO MODE: Simulating PIX payment creation');
+            const simulatedPayment = {
+                id: `demo_pix_payment_${Date.now()}`,
+                status: 'pending',
+                status_detail: 'pending_waiting_payment',
+                transaction_amount: amount,
+                payment_method_id: 'pix',
+                date_created: new Date().toISOString(),
+                external_reference: vehicleId,
+                point_of_interaction: {
+                    transaction_data: {
+                        qr_code: 'demo_qr_code_string',
+                        qr_code_base64: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==',
+                        ticket_url: 'https://demo-ticket-url.com'
+                    }
+                }
+            };
+            
+            console.log('Simulated PIX Payment created:', simulatedPayment);
+            return simulatedPayment;
+        }
+
+        // Real MercadoPago integration for production
         const paymentData = {
             transaction_amount: amount,
             payment_method_id: 'pix',
