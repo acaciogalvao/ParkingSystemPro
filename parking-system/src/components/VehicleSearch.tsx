@@ -35,6 +35,8 @@ export function VehicleSearch() {
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
+  const [plateValidation, setPlateValidation] = useState<PlateValidationResult>({ isValid: false, type: null, error: null });
+  const [isPlateSearch, setIsPlateSearch] = useState(false);
 
   const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8001';
 
