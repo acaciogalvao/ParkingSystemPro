@@ -80,15 +80,15 @@ export function Reports() {
 
   // Process data for charts
   const processedData = reportsData ? {
-    revenueData: Object.entries(reportsData.dailyRevenue || {}).map(([date, revenue]) => ({
-      day: new Date(date).toLocaleDateString('pt-BR', { weekday: 'short' }),
-      revenue: revenue as number
-    })).slice(-7),
+    revenueData: reportsData.dailyData ? reportsData.dailyData.slice(-7).map(day => ({
+      day: new Date(day.date).toLocaleDateString('pt-BR', { weekday: 'short' }),
+      revenue: day.revenue
+    })) : [],
     
-    entriesData: Object.entries(reportsData.dailyEntries || {}).map(([date, entries]) => ({
-      day: new Date(date).toLocaleDateString('pt-BR', { weekday: 'short' }),
-      entries: entries as number
-    })).slice(-7),
+    entriesData: reportsData.dailyData ? reportsData.dailyData.slice(-7).map(day => ({
+      day: new Date(day.date).toLocaleDateString('pt-BR', { weekday: 'short' }),
+      entries: day.entries
+    })) : [],
     
     vehicleTypeData: dashboardStats ? [
       { name: 'Carros', value: dashboardStats.totalCarsParked, color: '#3B82F6' },
