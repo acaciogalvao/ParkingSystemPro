@@ -53,11 +53,6 @@ export function VehicleSearch() {
     };
 
     fetchVehicles();
-    
-    // Set up real-time updates every 5 seconds
-    const interval = setInterval(fetchVehicles, 5000);
-    
-    return () => clearInterval(interval);
   }, [backendUrl]);
 
   // Handle search input change with plate validation
