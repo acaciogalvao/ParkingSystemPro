@@ -202,6 +202,15 @@ export default function ParkingSystem() {
           <div className="px-3 pb-3">
             <div className="flex gap-3 overflow-x-auto scrollbar-hide">
               <Button 
+                variant={activeTab === "reservations" ? "default" : "outline"} 
+                size="sm" 
+                onClick={() => setActiveTab("reservations")}
+                className="whitespace-nowrap flex-shrink-0 h-10 px-4"
+              >
+                <Calendar className="w-4 h-4 mr-2" />
+                Reservas
+              </Button>
+              <Button 
                 variant={activeTab === "spots" ? "default" : "outline"} 
                 size="sm" 
                 onClick={() => setActiveTab("spots")}
