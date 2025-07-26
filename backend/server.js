@@ -242,6 +242,73 @@ async function synchronizeParkingSpots() {
     }
 }
 
+// PIX Payment Helper Functions
+async function createPixPayment(amount, payerData, vehicleId) {
+    try {
+        const paymentData = {
+            transaction_amount: amount,
+            payment_method_id: 'pix',
+            payer: {
+                first_name: payerData.name.split(' ')[0],
+                last_name: payerData.name.split(' ').slice(1).join(' ') || payerData.name.split(' ')[0],
+                email: payerData.email,
+                identification: {
+                    type: 'CPF',
+                    number: payerData.cpf.replace(/\D/g, '')
+                },
+                phone: {
+                    area_code: payerData.phone ? payerData.phone.replace(/\D/g, '').slice(0, 2) : '11',
+                    number: payerData.phone ? payerData.phone.replace(/\D/g, '').slice(2) : '999999999'
+                }
+            },
+            external_reference: vehicleId,
+            description: `Pagamento de estacionamento - Veículo ${vehicleId}`,
+            notification_url: `${process.env.WEBHOOK_URL || 'https://your-domain.com'}/api/webhook/mercadopago`
+        };
+
+        const payment = await paymentClient.create({
+            body: paymentData,
+            requestOptions: {
+                idempotencyKey: uuidv4()
+            }
+        });
+
+        console.log('PIX Payment created:', payment);
+        return payment;
+    } catch (error) {
+        console.error('Error creating PIX payment:', error);
+        throw error;
+    }
+}
+
+function validateCPF(cpf) {
+    cpf = cpf.replace(/\D/g, '');
+    
+    if (cpf.length !== 11 || /^(\d)\1+$/.test(cpf)) {
+        return false;
+    }
+    
+    let sum = 0;
+    for (let i = 0; i < 9; i++) {
+        sum += parseInt(cpf[i]) * (10 - i);
+    }
+    let digit1 = (sum * 10) % 11;
+    if (digit1 === 10) digit1 = 0;
+    
+    if (parseInt(cpf[9]) !== digit1) {
+        return false;
+    }
+    
+    sum = 0;
+    for (let i = 0; i < 10; i++) {
+        sum += parseInt(cpf[i]) * (11 - i);
+    }
+    let digit2 = (sum * 10) % 11;
+    if (digit2 === 10) digit2 = 0;
+    
+    return parseInt(cpf[10]) === digit2;
+}
+
 // API Routes
 
 // Health check endpoint
