@@ -17,8 +17,8 @@ export const validateBrazilianPlate = (plate: string): PlateValidationResult => 
     return { isValid: false, type: null, error: null };
   }
 
-  // Remove espaços
-  const cleanPlate = plate.trim().replace(/\s+/g, '');
+  // Remove espaços e converte para maiúscula
+  const cleanPlate = plate.trim().replace(/\s+/g, '').toUpperCase();
   
   // Formato antigo: ABC-1234 (3 letras + hífen + 4 números = 8 caracteres)
   const oldFormatRegex = /^[A-Z]{3}-\d{4}$/;
