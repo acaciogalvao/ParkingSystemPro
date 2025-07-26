@@ -89,16 +89,26 @@ export function Reservations() {
 
   const fetchReservations = async () => {
     try {
-      const response = await fetch('/api/reservations');
+      const response = await fetch(`${backendUrl}/reservations`);
       const data = await response.json();
       
       if (data.success) {
         setReservations(data.data);
       } else {
         console.error('Error fetching reservations:', data.error);
+        toast({
+          title: "Erro ao carregar reservas",
+          description: data.error || "Erro desconhecido",
+          variant: "destructive"
+        });
       }
     } catch (error) {
       console.error('Error fetching reservations:', error);
+      toast({
+        title: "Erro de conexão",
+        description: "Erro ao carregar reservas. Tente novamente.",
+        variant: "destructive"
+      });
     } finally {
       setLoading(false);
     }
