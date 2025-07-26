@@ -527,6 +527,10 @@ export default function ParkingSystem() {
             <History />
           </TabsContent>
 
+          <TabsContent value="reservations">
+            <Reservations />
+          </TabsContent>
+
           <TabsContent value="reports">
             <Reports />
           </TabsContent>
