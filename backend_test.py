@@ -994,8 +994,30 @@ class ParkSystemTester:
                         exit_data = exit_response.json()
                         if exit_data.get("success"):
                             print_success(f"✅ Saída processada com sucesso")
-                            fee = float(exit_data['data']['fee']) if exit_data['data']['fee'] else 0.0
-                            duration = float(exit_data['data']['duration']) if exit_data['data']['duration'] else 0.0
+                            
+                            # Handle fee - might be formatted string or number
+                            fee_raw = exit_data['data']['fee']
+                            if isinstance(fee_raw, str):
+                                # Remove currency formatting if present
+                                fee_clean = fee_raw.replace('R$', '').replace(' ', '').replace(',', '.')
+                                try:
+                                    fee = float(fee_clean)
+                                except:
+                                    fee = 0.0
+                            else:
+                                fee = float(fee_raw) if fee_raw else 0.0
+                            
+                            # Handle duration - might be formatted string or number
+                            duration_raw = exit_data['data']['duration']
+                            if isinstance(duration_raw, str):
+                                duration_clean = duration_raw.replace('h', '').replace(',', '.')
+                                try:
+                                    duration = float(duration_clean)
+                                except:
+                                    duration = 0.0
+                            else:
+                                duration = float(duration_raw) if duration_raw else 0.0
+                                
                             print_info(f"Taxa: R$ {fee:.2f}")
                             print_info(f"Duração: {duration:.2f}h")
                             
