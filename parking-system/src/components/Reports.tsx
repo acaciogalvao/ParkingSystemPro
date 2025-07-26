@@ -139,9 +139,9 @@ export function Reports() {
         <Card className="p-3">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs text-gray-600">Receita Hoje</p>
-              <p className="text-sm font-bold">{formatCurrencyBR(dashboardStats?.todayRevenue || 0)}</p>
-              <Badge variant="outline" className="text-xs text-green-600 border-green-600">Real</Badge>
+              <p className="text-xs text-gray-600">Receita Total</p>
+              <p className="text-sm font-bold">{formatCurrencyBR(reportsData?.summary?.totalRevenue || 0)}</p>
+              <Badge variant="outline" className="text-xs text-green-600 border-green-600">Total</Badge>
             </div>
             <DollarSign className="h-5 w-5 text-green-600" />
           </div>
@@ -161,9 +161,9 @@ export function Reports() {
         <Card className="p-3">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs text-gray-600">Motos</p>
-              <p className="text-sm font-bold">{dashboardStats?.totalMotorcyclesParked || 0}</p>
-              <Badge variant="outline" className="text-xs text-green-600 border-green-600">Atual</Badge>
+              <p className="text-xs text-gray-600">Transações</p>
+              <p className="text-sm font-bold">{reportsData?.summary?.totalExits || 0}</p>
+              <Badge variant="outline" className="text-xs text-purple-600 border-purple-600">Total</Badge>
             </div>
             <TrendingUp className="h-5 w-5 text-purple-600" />
           </div>
