@@ -372,6 +372,13 @@ export function Reports() {
           </Button>
         </div>
       </Card>
+        </TabsContent>
+
+        {/* Vehicle Times Tab - New Detailed Report */}
+        <TabsContent value="times">
+          <VehicleTimesReport />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
