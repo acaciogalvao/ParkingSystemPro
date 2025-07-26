@@ -9,6 +9,12 @@ import { MercadoPagoConfig, Payment } from 'mercadopago';
 // Load environment variables
 dotenv.config();
 
+// Mercado Pago configuration
+const mercadoPagoClient = new MercadoPagoConfig({
+    accessToken: process.env.MP_ACCESS_TOKEN
+});
+const paymentClient = new Payment(mercadoPagoClient);
+
 // Helper function to format Brazilian currency values
 function formatBrazilianCurrency(value) {
     return value.toFixed(2).replace('.', ',');
