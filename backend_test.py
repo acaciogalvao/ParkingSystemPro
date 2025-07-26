@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Comprehensive Backend API Tests for ParkSystem Pro - Synchronization Focus
-Tests parking spot synchronization scenarios as requested
+Comprehensive Backend API Tests for ParkSystem Pro - Payment Methods Focus
+Tests payment method functionality as requested in review
 """
 
 import requests
@@ -10,7 +10,7 @@ import time
 from datetime import datetime, timedelta
 import sys
 
-# Backend URL - Using public endpoint as per instructions
+# Backend URL - Using public endpoint as per instructions  
 BASE_URL = "http://localhost:3000"
 
 class Colors:
