@@ -188,7 +188,7 @@ export function Reservations() {
 
     setCreating(true);
     try {
-      const response = await fetch('/api/reservations/create', {
+      const response = await fetch(`${backendUrl}/reservations/create`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
