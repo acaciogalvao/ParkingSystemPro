@@ -431,6 +431,17 @@ export function VehicleSearch() {
                   </Button>
 
                   <Button 
+                    variant="default" 
+                    size="sm" 
+                    onClick={() => handleCardPayment(vehicle)}
+                    disabled={processing}
+                    className="flex items-center gap-1 bg-blue-600 hover:bg-blue-700"
+                  >
+                    <CreditCard className="w-3 h-3" />
+                    Cartão
+                  </Button>
+
+                  <Button 
                     variant="outline" 
                     size="sm" 
                     onClick={() => handleExit(vehicle)}
