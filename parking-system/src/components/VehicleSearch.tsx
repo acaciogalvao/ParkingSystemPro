@@ -192,6 +192,26 @@ export function VehicleSearch() {
     setPixPaymentVehicle(null);
   };
 
+  const handleCardPayment = (vehicle: Vehicle) => {
+    setCardPaymentVehicle(vehicle);
+    setIsCardPaymentOpen(true);
+  };
+
+  const handleCardPaymentSuccess = async () => {
+    setIsCardPaymentOpen(false);
+    setCardPaymentVehicle(null);
+    
+    // Refresh vehicles list
+    await fetchAllVehicles();
+    
+    setSelectedVehicle(null);
+  };
+
+  const handleCardPaymentCancel = () => {
+    setIsCardPaymentOpen(false);
+    setCardPaymentVehicle(null);
+  };
+
   // Filter vehicles based on current search term (for local filtering when needed)
   const filteredVehicles = vehicles.filter(vehicle => {
     if (!searchTerm.trim()) return true;
