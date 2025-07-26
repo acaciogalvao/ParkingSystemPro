@@ -10,8 +10,8 @@ import time
 from datetime import datetime, timedelta
 import sys
 
-# Backend URL
-BASE_URL = "http://localhost:8001"
+# Backend URL - Using public endpoint as per instructions
+BASE_URL = "/api"
 
 class Colors:
     GREEN = '\033[92m'
