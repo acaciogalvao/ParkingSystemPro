@@ -117,7 +117,25 @@ export function Reports() {
         <p className="text-sm text-gray-600">Análise do estacionamento</p>
       </div>
 
-      {/* Quick Actions */}
+      {/* Tabs Navigation */}
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="grid w-full grid-cols-2 h-12 rounded-xl bg-gray-100">
+          <TabsTrigger value="statistics" className="text-xs h-12 data-[state=active]:bg-white data-[state=active]:shadow-sm">
+            <div className="flex items-center gap-2">
+              <BarChart3 className="w-4 h-4" />
+              <span>Estatísticas</span>
+            </div>
+          </TabsTrigger>
+          <TabsTrigger value="times" className="text-xs h-12 data-[state=active]:bg-white data-[state=active]:shadow-sm">
+            <div className="flex items-center gap-2">
+              <List className="w-4 h-4" />
+              <span>Horários</span>
+            </div>
+          </TabsTrigger>
+        </TabsList>
+
+        {/* Statistics Tab - Original Reports Content */}
+        <TabsContent value="statistics" className="space-y-4">{/* Quick Actions */}
       <div className="flex gap-2 overflow-x-auto scrollbar-hide">
         <Button variant="outline" size="sm" className="whitespace-nowrap flex-shrink-0">
           <Calendar className="w-3 h-3 mr-1" />
