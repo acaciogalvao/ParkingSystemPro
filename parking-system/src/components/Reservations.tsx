@@ -415,25 +415,22 @@ export function Reservations() {
     setPixError(null);
 
     try {
-      const response = await fetch(`${backendUrl}/payments/pix/create`, {
+      // Use the specific reservation PIX endpoint
+      const response = await fetch(`${backendUrl}/reservations/${selectedReservation.id}/create-pix-payment`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          vehicleId: selectedReservation.id, // Using reservation ID as vehicle ID for this case
-          payerEmail: 'reserva@email.com', // You may want to collect this from user
+          payerEmail: 'reserva@exemplo.com', // Could be collected from user
           payerName: selectedReservation.ownerName,
-          payerCPF: '00000000000', // You may want to collect this from user
-          payerPhone: selectedReservation.ownerPhone
+          payerCPF: '00000000000', // Could be collected from user
+          payerPhone: selectedReservation.ownerPhone || ''
         }),
       });
 
       const result = await response.json();
 
       if (result.success) {
-        setPixPaymentData({
-          ...result.data,
-          reservationId: selectedReservation.id
-        });
+        setPixPaymentData(result.data);
         setPaymentStep('qr');
       } else {
         setPixError(result.error || 'Erro ao criar pagamento PIX');
