@@ -193,7 +193,7 @@ export function VehicleSearch() {
                   placeholder="Digite a placa, nome ou modelo..."
                   value={searchTerm}
                   onChange={(e) => handleSearchChange(e.target.value)}
-                  maxLength={isPlateSearch ? 8 : undefined}
+                  maxLength={isPlateSearch ? (searchTerm.includes('-') ? 8 : 7) : undefined}
                   className={`h-12 ${
                     isPlateSearch 
                       ? plateValidation.error 
