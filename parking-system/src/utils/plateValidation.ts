@@ -96,7 +96,7 @@ export const formatPlateInput = (value: string): string => {
  * @returns true se parece ser uma placa
  */
 export const looksLikePlate = (value: string): boolean => {
-  const cleanValue = value.trim().replace(/[^A-Z0-9-]/g, '');
+  const cleanValue = value.trim().replace(/[^A-Z0-9-]/g, '').toUpperCase();
   
   // Deve ter pelo menos 3 caracteres e conter letras e números
   if (cleanValue.length < 3) return false;
