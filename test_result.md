@@ -263,7 +263,7 @@ agent_communication:
   - agent: "setup_and_configuration"
     message: "✅ SISTEMA CONFIGURADO PARA RODAR EXTERNAMENTE - Sistema ParkSystem Pro está rodando localmente e acessível externamente. Dependências instaladas com yarn, servidor Vite rodando na porta 5173, interface funcional testada. URLs de acesso: Local http://localhost:5173 | Externo http://10.64.162.175:5173"
   - agent: "development"
-    message: "✅ AUTO-FORMATAÇÃO DE PLACAS CORRIGIDA - Implementada lógica correta para inserir hífen apenas quando o 5º dígito for número (formato antigo ABC-1234). Formato Mercosul (ABC1A12) não recebe hífen. Sistema testado e funcionando corretamente. URL externa funcionando: https://95440fb9-5364-476c-87e5-e97f774af077.preview.emergentagent.com"
+    message: "✅ AUTO-FORMATAÇÃO DE PLACAS CORRIGIDA - Implementada lógica correta para inserir hífen apenas quando o 5º dígito for número (formato antigo ABC-1234). Formato Mercosul (ABC1A12) não recebe hífen. Sistema testado e funcionando corretamente. URL externa funcionando: https://73981021-a9d0-4ec5-b30c-5d691edc6e4e.preview.emergentagent.com"
   - agent: "backend_development"
     message: "✅ API E BANCO DE DADOS MONGODB CRIADOS E FUNCIONANDO - Implementada API FastAPI completa rodando em http://localhost:8001 com 9 endpoints: health check, entrada/saída de veículos, busca, vagas, estatísticas, relatórios e histórico. MongoDB configurado e funcionando. Backend totalmente integrado com frontend. Todos os 16 testes da API passaram com 100% de sucesso. Sistema completo frontend + backend + banco funcionando perfeitamente."
   - agent: "testing"
