@@ -704,6 +704,38 @@ export function Reservations() {
           ))
         )}
       </div>
+
+      {/* Payment Modal */}
+      {showPayment && paymentData && selectedReservation && (
+        <div>
+          <PixPayment
+            vehicle={{
+              id: selectedReservation.id,
+              plate: selectedReservation.plate,
+              type: selectedReservation.vehicleType,
+              model: '',
+              color: '',
+              ownerName: selectedReservation.ownerName,
+              ownerPhone: selectedReservation.ownerPhone,
+              entryTime: new Date().toISOString(),
+              spot: selectedReservation.spot || '',
+              entryTimestamp: new Date().toISOString()
+            }}
+            onSuccess={() => {
+              setShowPayment(false);
+              setSelectedReservation(null);
+              setPaymentData(null);
+              fetchReservations();
+            }}
+            onCancel={() => {
+              setShowPayment(false);
+              setSelectedReservation(null);
+              setPaymentData(null);
+            }}
+            isOpen={showPayment}
+          />
+        </div>
+      )}
     </div>
   );
 }
