@@ -646,7 +646,8 @@ app.post('/api/vehicles/exit', async (req, res) => {
                 entryTime: vehicle.entryTime,
                 exitTime: exitTime.toISOString(),
                 duration: durationHours,
-                fee: fee
+                fee: fee,
+                paymentMethod: 'Dinheiro'
             }
         });
 
