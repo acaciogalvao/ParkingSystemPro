@@ -1868,15 +1868,8 @@ def main():
     """Main test execution"""
     tester = ParkSystemTester()
     
-    # Test the card payment system as requested
-    tester.test_card_payment_system()
-    
-    # Also test basic health and functionality
-    tester.test_health_check()
-    tester.test_dashboard_stats()
-    
-    # Print summary
-    tester.print_summary()
+    # Run payment methods focused tests as requested in review
+    tester.run_payment_methods_tests()
     
     # Return exit code based on results
     if tester.test_results["failed"] == 0:
