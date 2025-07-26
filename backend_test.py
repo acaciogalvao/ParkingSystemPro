@@ -2111,17 +2111,40 @@ class ParkSystemTester:
             print_warning(f"⚠️ Erro ao limpar veículo de teste: {str(e)}")
 
 def main():
-    """Main test execution"""
+    """Main function to run the tests focused on the new vehicle times report"""
     tester = ParkSystemTester()
     
-    # Run payment methods focused tests as requested in review
-    tester.run_payment_methods_tests()
+    print(f"{Colors.BOLD}{Colors.BLUE}🚀 TESTE COMPLETO DO SISTEMA DE ESTACIONAMENTO - FOCO EM RELATÓRIOS DE HORÁRIOS{Colors.ENDC}")
+    print(f"{Colors.BLUE}Backend URL: {tester.base_url}{Colors.ENDC}")
+    print("=" * 80)
+    
+    # 1. Health check first
+    tester.test_health_check()
+    
+    # 2. Test basic functionality
+    tester.test_vehicle_entry_valid()
+    tester.test_get_vehicles()
+    tester.test_parking_spots()
+    tester.test_dashboard_stats()
+    
+    # 3. MAIN FOCUS: Test the new vehicle times report endpoint
+    tester.test_vehicle_times_report()
+    
+    # 4. Test other report endpoints
+    tester.test_monthly_report()
+    tester.test_operations_history()
+    tester.test_reports_export_endpoint()
+    
+    # 5. Test vehicle exit functionality
+    tester.test_vehicle_exit()
+    
+    # Print final summary
+    tester.print_summary()
     
     # Return exit code based on results
-    if tester.test_results["failed"] == 0:
-        sys.exit(0)
-    else:
-        sys.exit(1)
+    if tester.test_results["failed"] > 0:
+        return 1
+    return 0
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())
