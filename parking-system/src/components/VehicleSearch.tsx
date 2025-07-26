@@ -159,12 +159,18 @@ export function VehicleSearch() {
     }
   };
 
-  const filteredVehicles = vehicles.filter(vehicle => 
-    vehicle.plate.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    vehicle.ownerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    vehicle.model.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    vehicle.spot.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Filter vehicles based on current search term (for local filtering when needed)
+  const filteredVehicles = vehicles.filter(vehicle => {
+    if (!searchTerm.trim()) return true;
+    
+    const searchLower = searchTerm.toLowerCase();
+    return (
+      vehicle.plate.toLowerCase().includes(searchLower) ||
+      vehicle.ownerName.toLowerCase().includes(searchLower) ||
+      vehicle.model.toLowerCase().includes(searchLower) ||
+      vehicle.spot.toLowerCase().includes(searchLower)
+    );
+  });
 
   return (
     <div className="px-4 space-y-4">
