@@ -299,7 +299,23 @@ export function Reservations() {
     return true;
   });
 
-  const getMinDateTime = () => {
+  const handleReservationClick = (reservation: Reservation) => {
+    if (reservation.status === 'pending_payment') {
+      // Open payment modal for pending payment reservations
+      setSelectedReservation(reservation);
+      setPaymentData({
+        reservationId: reservation.id,
+        amount: reservation.fee,
+        formattedAmount: reservation.formattedFee,
+        vehicle: {
+          plate: reservation.plate,
+          type: reservation.vehicleType,
+          owner: reservation.ownerName
+        }
+      });
+      setShowPayment(true);
+    }
+  };
     const now = new Date();
     now.setMinutes(now.getMinutes() + 30); // At least 30 minutes from now
     return now.toISOString().slice(0, 16);
