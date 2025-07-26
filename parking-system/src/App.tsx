@@ -21,7 +21,8 @@ import {
   Plus,
   Search,
   Filter,
-  BarChart3
+  BarChart3,
+  Calendar
 } from "lucide-react";
 
 interface Vehicle {
