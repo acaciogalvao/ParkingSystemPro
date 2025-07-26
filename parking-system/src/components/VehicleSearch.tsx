@@ -5,7 +5,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Timer } from "@/components/Timer";
-import { Car, Bike, Search, Clock, DollarSign, LogOut } from "lucide-react";
+import { Car, Bike, Search, Clock, DollarSign, LogOut, CheckCircle, AlertCircle } from "lucide-react";
+import { validateBrazilianPlate, formatPlateInput, looksLikePlate, shouldAutoSearch, type PlateValidationResult } from "@/utils/plateValidation";
 
 interface Vehicle {
   id: string;
