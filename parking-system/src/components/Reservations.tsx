@@ -859,7 +859,7 @@ export function Reservations() {
         )}
       </div>
 
-      {/* Payment Modal */}
+      {/* Payment Modal with PIX Integration */}
       {showPayment && paymentData && selectedReservation && (
         <Dialog open={showPayment} onOpenChange={() => setShowPayment(false)}>
           <DialogContent className="w-[95vw] max-w-md max-h-[90vh] overflow-y-auto">
@@ -869,7 +869,7 @@ export function Reservations() {
                 Pagamento da Reserva
               </DialogTitle>
               <DialogDescription>
-                Reserva da vaga para {selectedReservation.plate}
+                Reserva da vaga para {selectedReservation?.plate}
               </DialogDescription>
             </DialogHeader>
 
@@ -878,57 +878,176 @@ export function Reservations() {
               <CardContent className="pt-4">
                 <div className="flex justify-between items-center">
                   <div>
-                    <p className="font-bold text-lg">{selectedReservation.plate}</p>
-                    <p className="text-sm text-gray-600">{selectedReservation.ownerName}</p>
+                    <p className="font-bold text-lg">{selectedReservation?.plate}</p>
+                    <p className="text-sm text-gray-600">{selectedReservation?.ownerName}</p>
                     <p className="text-sm text-gray-600">
-                      {selectedReservation.formattedDateTime} • {selectedReservation.duration}h
+                      {selectedReservation?.formattedDateTime} • {selectedReservation?.duration}h
                     </p>
                   </div>
                   <div className="text-right">
                     <Badge variant="outline">
-                      {selectedReservation.vehicleType === 'car' ? 'Carro' : 'Moto'}
+                      {selectedReservation?.vehicleType === 'car' ? 'Carro' : 'Moto'}
                     </Badge>
                     <p className="text-lg font-bold text-green-600 mt-1">
-                      {selectedReservation.formattedFee}
+                      {selectedReservation?.formattedFee}
                     </p>
                   </div>
                 </div>
               </CardContent>
             </Card>
 
-            <Alert className="mb-4 border-blue-200 bg-blue-50">
-              <AlertCircle className="h-4 w-4 text-blue-600" />
-              <AlertDescription className="text-blue-800">
-                Clique no botão abaixo para realizar o pagamento PIX desta reserva.
-              </AlertDescription>
-            </Alert>
+            {pixError && (
+              <Alert className="mb-4 border-red-200 bg-red-50">
+                <AlertCircle className="h-4 w-4 text-red-600" />
+                <AlertDescription className="text-red-800">
+                  {pixError}
+                </AlertDescription>
+              </Alert>
+            )}
 
-            <div className="flex gap-2">
-              <Button 
-                variant="outline" 
-                onClick={() => setShowPayment(false)}
-                className="flex-1"
-              >
-                Cancelar
-              </Button>
-              <Button 
-                onClick={() => {
-                  // Here you would integrate with actual PIX payment
-                  // For now, we'll simulate successful payment
-                  toast({
-                    title: "Pagamento realizado!",
-                    description: "Sua reserva foi confirmada com sucesso.",
-                  });
-                  setShowPayment(false);
-                  setSelectedReservation(null);
-                  fetchReservations();
-                }}
-                className="flex-1"
-              >
-                <QrCode className="w-4 h-4 mr-2" />
-                Pagar com PIX
-              </Button>
-            </div>
+            {/* Step 1: Payment Form */}
+            {paymentStep === 'form' && (
+              <div className="space-y-4">
+                <Alert className="mb-4 border-blue-200 bg-blue-50">
+                  <AlertCircle className="h-4 w-4 text-blue-600" />
+                  <AlertDescription className="text-blue-800">
+                    Clique no botão abaixo para gerar o QR code PIX e realizar o pagamento desta reserva.
+                  </AlertDescription>
+                </Alert>
+
+                <div className="flex gap-2">
+                  <Button 
+                    variant="outline" 
+                    onClick={() => setShowPayment(false)}
+                    className="flex-1"
+                  >
+                    Cancelar
+                  </Button>
+                  <Button 
+                    onClick={createReservationPixPayment}
+                    disabled={pixLoading}
+                    className="flex-1"
+                  >
+                    {pixLoading ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Gerando...
+                      </>
+                    ) : (
+                      <>
+                        <QrCode className="w-4 h-4 mr-2" />
+                        Gerar PIX
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {/* Step 2: PIX QR Code */}
+            {paymentStep === 'qr' && pixPaymentData && (
+              <div className="space-y-4">
+                <div className="text-center">
+                  <p className="text-2xl font-bold text-green-600 mb-2">
+                    {pixPaymentData.formattedAmount}
+                  </p>
+                  <div className="flex items-center justify-center gap-2 text-sm text-gray-600">
+                    <Clock className="w-4 h-4" />
+                    <span>Expira em: {formatTime(timeLeft)}</span>
+                  </div>
+                </div>
+
+                {/* PIX QR Code */}
+                <div className="text-center space-y-4">
+                  <div className="bg-white p-4 rounded-lg border-2 border-dashed border-gray-300 inline-block">
+                    {pixPaymentData.pixCodeBase64 ? (
+                      <img 
+                        src={pixPaymentData.pixCodeBase64.startsWith('data:') ? pixPaymentData.pixCodeBase64 : `data:image/png;base64,${pixPaymentData.pixCodeBase64}`}
+                        alt="QR Code PIX" 
+                        className="w-48 h-48 mx-auto"
+                      />
+                    ) : (
+                      <div className="w-48 h-48 flex items-center justify-center bg-gray-100 rounded">
+                        <QrCode className="w-16 h-16 text-gray-400" />
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="space-y-2">
+                    <p className="text-sm text-gray-600">
+                      Escaneie o QR Code com seu app do banco ou copie o código PIX
+                    </p>
+                    
+                    <div className="flex gap-2">
+                      <Input
+                        value={pixPaymentData.pixCode}
+                        readOnly
+                        className="text-xs font-mono"
+                      />
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={copyPixCode}
+                        className="whitespace-nowrap"
+                      >
+                        {copied ? (
+                          <>
+                            <CheckCircle className="w-4 h-4 mr-1" />
+                            Copiado!
+                          </>
+                        ) : (
+                          <>
+                            <Copy className="w-4 h-4 mr-1" />
+                            Copiar
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex gap-2">
+                  <Button 
+                    variant="outline" 
+                    onClick={() => setShowPayment(false)}
+                    className="flex-1"
+                  >
+                    Cancelar
+                  </Button>
+                  <Button 
+                    onClick={() => setPaymentStep('checking')}
+                    className="flex-1"
+                  >
+                    <CheckCircle className="w-4 h-4 mr-2" />
+                    Já Paguei
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {/* Step 3: Checking Payment */}
+            {paymentStep === 'checking' && (
+              <div className="text-center space-y-4">
+                <div className="flex items-center justify-center">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+                </div>
+                
+                <div>
+                  <p className="font-medium">Verificando pagamento...</p>
+                  <p className="text-sm text-gray-600 mt-1">
+                    Aguarde enquanto confirmamos seu pagamento PIX
+                  </p>
+                </div>
+
+                <Button 
+                  variant="outline" 
+                  onClick={() => setPaymentStep('qr')}
+                  className="w-full"
+                >
+                  Voltar ao QR Code
+                </Button>
+              </div>
+            )}
           </DialogContent>
         </Dialog>
       )}
