@@ -390,13 +390,13 @@ export function VehicleSearch() {
                 </div>
 
                 {/* Actions */}
-                <div className="flex gap-2 pt-2 border-t">
+                <div className="grid grid-cols-2 gap-2 pt-2 border-t">
                   <Dialog>
                     <DialogTrigger asChild>
                       <Button 
                         variant="outline" 
                         size="sm" 
-                        className="flex-1"
+                        className="col-span-2"
                         onClick={() => setSelectedVehicle(vehicle)}
                       >
                         Ver Detalhes
@@ -458,7 +458,7 @@ export function VehicleSearch() {
                     variant="default" 
                     size="sm" 
                     onClick={() => handlePixPayment(vehicle)}
-                    disabled={processing}
+                    disabled={processing || verifyingPayment}
                     className="flex items-center gap-1 bg-green-600 hover:bg-green-700"
                   >
                     <CreditCard className="w-3 h-3" />
@@ -469,7 +469,7 @@ export function VehicleSearch() {
                     variant="default" 
                     size="sm" 
                     onClick={() => handleCardPayment(vehicle)}
-                    disabled={processing}
+                    disabled={processing || verifyingPayment}
                     className="flex items-center gap-1 bg-blue-600 hover:bg-blue-700"
                   >
                     <CreditCard className="w-3 h-3" />
@@ -477,14 +477,25 @@ export function VehicleSearch() {
                   </Button>
 
                   <Button 
+                    variant="secondary" 
+                    size="sm" 
+                    onClick={() => handleVerifyPayment(vehicle)}
+                    disabled={processing || verifyingPayment}
+                    className="flex items-center gap-1 bg-yellow-500 hover:bg-yellow-600 text-white col-span-2"
+                  >
+                    <Check className="w-3 h-3" />
+                    {verifyingPayment ? 'Verificando...' : 'Já Paguei - Verificar'}
+                  </Button>
+
+                  <Button 
                     variant="outline" 
                     size="sm" 
                     onClick={() => handleExit(vehicle)}
-                    disabled={processing}
-                    className="flex items-center gap-1"
+                    disabled={processing || verifyingPayment}
+                    className="flex items-center gap-1 col-span-2"
                   >
-                    <DollarSign className="w-3 h-3" />
-                    {processing ? 'Processando...' : 'Dinheiro'}
+                    <Banknote className="w-3 h-3" />
+                    {processing ? 'Processando...' : 'Pagar em Dinheiro'}
                   </Button>
                 </div>
               </div>
