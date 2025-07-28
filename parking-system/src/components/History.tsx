@@ -9,12 +9,13 @@ import {
   ArrowUpRight, 
   ArrowDownLeft, 
   RefreshCw,
-  Calendar
+  Calendar,
+  XCircle
 } from "lucide-react";
 
 interface HistoryEntry {
   id: string;
-  type: 'entry' | 'exit' | 'update';
+  type: 'entry' | 'exit' | 'update' | 'reservation_cancelled' | 'reservation_created' | 'reservation_payment_confirmed';
   plate: string;
   spot: string;
   time: string;
