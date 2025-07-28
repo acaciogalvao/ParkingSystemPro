@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Timer } from "@/components/Timer";
 import { PixPayment } from "@/components/PixPayment";
 import { CardPayment } from "@/components/CardPayment";
-import { Car, Bike, Search, Clock, DollarSign, LogOut, CheckCircle, AlertCircle, CreditCard } from "lucide-react";
+import { Car, Bike, Search, Clock, DollarSign, LogOut, CheckCircle, AlertCircle, CreditCard, Banknote, Check } from "lucide-react";
 import { validateBrazilianPlate, formatPlateInput, looksLikePlate, shouldAutoSearch, type PlateValidationResult } from "@/utils/plateValidation";
 
 interface Vehicle {
