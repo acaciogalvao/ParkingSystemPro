@@ -107,6 +107,14 @@ const reservationCancelSchema = Joi.object({
     reservationId: Joi.string().required().description('Reservation ID')
 });
 
+// PIX payment schema for reservations
+const reservationPixPaymentSchema = Joi.object({
+    payerEmail: Joi.string().email().required().description('Payer email'),
+    payerName: Joi.string().required().description('Payer full name'),
+    payerCPF: Joi.string().required().description('Payer CPF'),
+    payerPhone: Joi.string().optional().description('Payer phone')
+});
+
 // Credit/Debit card payment schemas
 const cardPaymentSchema = Joi.object({
     vehicleId: Joi.string().required().description('Vehicle ID'),
