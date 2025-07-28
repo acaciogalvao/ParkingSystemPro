@@ -277,12 +277,11 @@ export function Reservations() {
       return false;
     }
 
-    // Validate CPF (basic)
-    const cpfRegex = /^\d{3}\.\d{3}\.\d{3}-\d{2}$/;
-    if (!cpfRegex.test(payerCPF)) {
+    // Validate CPF
+    if (!validateCPF(payerCPF)) {
       toast({
         title: "CPF inválido",
-        description: "Digite um CPF válido no formato XXX.XXX.XXX-XX.",
+        description: "Digite um CPF válido.",
         variant: "destructive"
       });
       return false;
