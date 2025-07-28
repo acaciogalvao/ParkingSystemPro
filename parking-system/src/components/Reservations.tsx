@@ -1065,7 +1065,10 @@ export function Reservations() {
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => handleCancelReservation(reservation.id)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleCancelReservation(reservation.id);
+                      }}
                     >
                       <XCircle className="h-4 w-4 mr-2" />
                       Cancelar
@@ -1076,7 +1079,10 @@ export function Reservations() {
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => handleCancelReservation(reservation.id)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleCancelReservation(reservation.id);
+                      }}
                     >
                       <XCircle className="h-4 w-4 mr-2" />
                       Cancelar
