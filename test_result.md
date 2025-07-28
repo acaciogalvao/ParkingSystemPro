@@ -262,9 +262,11 @@ metadata:
 
 test_plan:
   current_focus:
+    - "Sistema de reservas com pagamento PIX COMPLETAMENTE TESTADO E FUNCIONANDO"
     - "Funcionalidade de exportação de relatórios COMPLETAMENTE TESTADA E FUNCIONANDO"
-    - "Frontend e Backend integração 100% funcional para exports"
+    - "Frontend e Backend integração 100% funcional para exports e reservas"
     - "Todos os formatos de export (PDF, Excel, CSV) funcionando perfeitamente"
+    - "PIX payment system totalmente operacional com QR Code e timer"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
