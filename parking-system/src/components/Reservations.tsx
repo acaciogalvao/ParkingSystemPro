@@ -101,6 +101,22 @@ const validateCPF = (cpf: string): boolean => {
   return parseInt(cpf[10]) === digit2;
 };
 
+// Formatação de CPF
+const formatCPF = (value: string): string => {
+  const numbersOnly = value.replace(/\D/g, '');
+  const limitedNumbers = numbersOnly.slice(0, 11);
+  
+  if (limitedNumbers.length <= 3) {
+    return limitedNumbers;
+  } else if (limitedNumbers.length <= 6) {
+    return `${limitedNumbers.slice(0, 3)}.${limitedNumbers.slice(3)}`;
+  } else if (limitedNumbers.length <= 9) {
+    return `${limitedNumbers.slice(0, 3)}.${limitedNumbers.slice(3, 6)}.${limitedNumbers.slice(6)}`;
+  } else {
+    return `${limitedNumbers.slice(0, 3)}.${limitedNumbers.slice(3, 6)}.${limitedNumbers.slice(6, 9)}-${limitedNumbers.slice(9)}`;
+  }
+};
+
 export function Reservations() {
   const [reservations, setReservations] = useState<Reservation[]>([]);
   const [loading, setLoading] = useState(true);
