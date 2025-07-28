@@ -56,6 +56,8 @@ interface Reservation {
   paymentId?: string;
   vehicleId?: string;
   spot?: string;
+  payerEmail?: string;
+  payerCPF?: string;
 }
 
 interface NewReservation {
