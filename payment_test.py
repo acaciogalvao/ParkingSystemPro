@@ -128,7 +128,7 @@ class PaymentSystemTester:
             "vehicleId": vehicle_id,
             "payerEmail": "teste@email.com",
             "payerName": "João Silva",
-            "payerCPF": "12345678901",
+            "payerCPF": "11144477735",  # Valid CPF
             "payerPhone": "(11) 99999-9999",
             "cardToken": "test_card_token_123",
             "cardBrand": "visa",
