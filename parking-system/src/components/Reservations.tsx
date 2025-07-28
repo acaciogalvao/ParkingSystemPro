@@ -680,6 +680,7 @@ export function Reservations() {
                     value={newReservation.payerCPF}
                     onChange={(e) => handleInputChange('payerCPF', e.target.value)}
                     placeholder="000.000.000-00"
+                    maxLength={14}
                   />
                 </div>
               </div>
