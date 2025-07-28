@@ -117,6 +117,39 @@ const formatCPF = (value: string): string => {
   }
 };
 
+// Função robusta para copiar texto com fallback
+const copyToClipboard = async (text: string): Promise<boolean> => {
+  // Método 1: Tentar usar a API Clipboard moderna
+  if (navigator.clipboard && window.isSecureContext) {
+    try {
+      await navigator.clipboard.writeText(text);
+      return true;
+    } catch (error) {
+      console.warn('Clipboard API falhou, tentando método alternativo:', error);
+    }
+  }
+  
+  // Método 2: Fallback usando textarea temporário
+  try {
+    const textarea = document.createElement('textarea');
+    textarea.value = text;
+    textarea.style.position = 'fixed';
+    textarea.style.left = '-9999px';
+    textarea.style.top = '-9999px';
+    document.body.appendChild(textarea);
+    textarea.focus();
+    textarea.select();
+    
+    const successful = document.execCommand('copy');
+    document.body.removeChild(textarea);
+    
+    return successful;
+  } catch (error) {
+    console.error('Método de fallback falhou:', error);
+    return false;
+  }
+};
+
 export function Reservations() {
   const [reservations, setReservations] = useState<Reservation[]>([]);
   const [loading, setLoading] = useState(true);
@@ -492,23 +525,30 @@ export function Reservations() {
   };
 
   const copyPixCode = async () => {
-    if (pixPaymentData?.pixCode) {
-      try {
-        await navigator.clipboard.writeText(pixPaymentData.pixCode);
-        setCopied(true);
-        setTimeout(() => setCopied(false), 2000);
-        toast({
-          title: "Código copiado!",
-          description: "Código PIX copiado para a área de transferência.",
-        });
-      } catch (error) {
-        console.error('Error copying to clipboard:', error);
-        toast({
-          title: "Erro ao copiar",
-          description: "Não foi possível copiar o código PIX.",
-          variant: "destructive"
-        });
-      }
+    if (!pixPaymentData?.pixCode) {
+      toast({
+        title: "Erro ao copiar",
+        description: "Código PIX não disponível.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    const success = await copyToClipboard(pixPaymentData.pixCode);
+    
+    if (success) {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+      toast({
+        title: "Código copiado!",
+        description: "Código PIX copiado para a área de transferência.",
+      });
+    } else {
+      toast({
+        title: "Erro ao copiar",
+        description: "Não foi possível copiar o código PIX. Tente selecionar e copiar manualmente.",
+        variant: "destructive"
+      });
     }
   };
 
