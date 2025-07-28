@@ -46,7 +46,7 @@ class PaymentSystemTester:
         """Register a test vehicle for payment testing"""
         print("\n🔍 TESTE 2 - Registro de Veículo de Teste")
         vehicle_data = {
-            "plate": "PAY-1234",
+            "plate": "TST-9999",  # Different plate
             "type": "car",
             "model": "Honda Civic",
             "color": "Branco",
