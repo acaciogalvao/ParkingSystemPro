@@ -1776,6 +1776,55 @@ app.get('/api/reports/vehicle-times', async (req, res) => {
     }
 });
 
+// Get operations history
+app.get('/api/history', async (req, res) => {
+    try {
+        const { limit = 50 } = req.query;
+        
+        const operationsCollection = db.collection('operations_history');
+        const operations = await operationsCollection
+            .find({})
+            .sort({ timestamp: -1 })
+            .limit(parseInt(limit))
+            .toArray();
+
+        // Format operations for display
+        const formattedOperations = operations.map(operation => {
+            const timestamp = new Date(operation.timestamp);
+            
+            return {
+                id: operation.id,
+                type: operation.type,
+                plate: operation.plate,
+                spot: operation.spot || 'N/A',
+                timestamp: operation.timestamp,
+                time: timestamp.toLocaleString('pt-BR', {
+                    timeZone: 'America/Sao_Paulo',
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                }),
+                data: operation.data
+            };
+        });
+
+        res.json({
+            success: true,
+            data: formattedOperations,
+            total: formattedOperations.length
+        });
+
+    } catch (error) {
+        console.error('Error fetching operations history:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Erro ao buscar histórico de operações'
+        });
+    }
+});
+
 // Start server
 const PORT = process.env.PORT || 8001;
 
