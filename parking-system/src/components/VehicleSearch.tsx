@@ -208,6 +208,45 @@ export function VehicleSearch() {
     setCardPaymentVehicle(null);
   };
 
+  // Handle "Já Paguei" verification
+  const handleVerifyPayment = async (vehicle: Vehicle) => {
+    try {
+      setVerifyingPayment(true);
+      
+      const response = await fetch(`${backendUrl}/payments/verify-payment`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          vehicleId: vehicle.id
+        }),
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        if (result.data.paymentVerified && result.data.autoProcessed) {
+          // Payment was verified and exit was processed automatically
+          alert(`✅ Pagamento confirmado!\n\nSaída processada automaticamente:\nPlaca: ${result.data.plate}\nVaga: ${result.data.spot}\nDuração: ${result.data.duration}\nValor: ${result.data.fee}\nMétodo: ${result.data.paymentMethod}`);
+          
+          // Refresh vehicles list
+          await fetchAllVehicles();
+          setSelectedVehicle(null);
+        } else {
+          alert(`❌ ${result.message}\n\nNenhum pagamento aprovado foi encontrado para este veículo.`);
+        }
+      } else {
+        alert(`⚠️ ${result.message || 'Erro ao verificar pagamento'}`);
+      }
+    } catch (error) {
+      console.error('Error verifying payment:', error);
+      alert('❌ Erro ao verificar pagamento. Tente novamente.');
+    } finally {
+      setVerifyingPayment(false);
+    }
+  };
+
   // Filter vehicles based on current search term (for local filtering when needed)
   const filteredVehicles = vehicles.filter(vehicle => {
     if (!searchTerm.trim()) return true;
