@@ -415,14 +415,14 @@ export function Reservations() {
     setPixError(null);
 
     try {
-      // Use the specific reservation PIX endpoint
+      // Use the reservation data that already has the correct payer information
       const response = await fetch(`${backendUrl}/reservations/${selectedReservation.id}/create-pix-payment`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          payerEmail: 'reserva@exemplo.com', // Could be collected from user
+          payerEmail: selectedReservation.payerEmail || 'reserva@exemplo.com',
           payerName: selectedReservation.ownerName,
-          payerCPF: '00000000000', // Could be collected from user
+          payerCPF: selectedReservation.payerCPF || '11144477735', // Use valid CPF from reservation
           payerPhone: selectedReservation.ownerPhone || ''
         }),
       });
