@@ -1612,6 +1612,162 @@ app.get('/api/spots/with-duration', async (req, res) => {
     }
 });
 
+// Get detailed vehicle times report
+app.get('/api/reports/vehicle-times', async (req, res) => {
+    try {
+        const { 
+            startDate, 
+            endDate, 
+            vehicleType, 
+            status = 'all', 
+            limit = 50 
+        } = req.query;
+
+        const vehiclesCollection = db.collection('vehicles');
+        const query = {};
+
+        // Apply filters
+        if (vehicleType && vehicleType !== 'all') {
+            query.type = vehicleType;
+        }
+
+        if (status && status !== 'all') {
+            query.status = status;
+        }
+
+        // Date range filter
+        if (startDate || endDate) {
+            const dateFilter = {};
+            if (startDate) {
+                dateFilter.$gte = new Date(startDate + 'T00:00:00.000Z').toISOString();
+            }
+            if (endDate) {
+                dateFilter.$lte = new Date(endDate + 'T23:59:59.999Z').toISOString();
+            }
+            query.entryTime = dateFilter;
+        }
+
+        // Fetch vehicles with pagination
+        const vehicles = await vehiclesCollection
+            .find(query)
+            .sort({ entryTime: -1 })
+            .limit(parseInt(limit))
+            .toArray();
+
+        // Process vehicles data
+        const processedVehicles = vehicles.map(vehicle => {
+            const entryTime = new Date(vehicle.entryTime);
+            const exitTime = vehicle.exitTime ? new Date(vehicle.exitTime) : null;
+            const currentTime = new Date();
+            
+            let duration = null;
+            let durationFormatted = null;
+            let estimatedFee = null;
+            
+            if (vehicle.status === 'parked') {
+                // Calculate current duration for parked vehicles
+                const durationMs = currentTime - entryTime;
+                const hours = Math.floor(durationMs / (1000 * 60 * 60));
+                const minutes = Math.floor((durationMs % (1000 * 60 * 60)) / (1000 * 60));
+                const totalMinutes = Math.floor(durationMs / (1000 * 60));
+                
+                duration = { hours, minutes, totalMinutes };
+                durationFormatted = `${hours}h ${minutes}m`;
+                
+                // Calculate estimated fee
+                const ratePerMinute = vehicle.type === 'car' ? (10 / 60) : (7 / 60);
+                estimatedFee = Math.max(totalMinutes * ratePerMinute, 1);
+            } else if (vehicle.status === 'exited' && exitTime) {
+                // Calculate actual duration for exited vehicles
+                const durationMs = exitTime - entryTime;
+                const hours = Math.floor(durationMs / (1000 * 60 * 60));
+                const minutes = Math.floor((durationMs % (1000 * 60 * 60)) / (1000 * 60));
+                const totalMinutes = Math.floor(durationMs / (1000 * 60));
+                
+                duration = { hours, minutes, totalMinutes };
+                durationFormatted = `${hours}h ${minutes}m`;
+            }
+
+            return {
+                id: vehicle.id,
+                plate: vehicle.plate,
+                type: vehicle.type,
+                model: vehicle.model,
+                color: vehicle.color,
+                ownerName: vehicle.ownerName,
+                ownerPhone: vehicle.ownerPhone || '',
+                spot: vehicle.spot,
+                status: vehicle.status,
+                entryTime: entryTime.toLocaleString('pt-BR', { 
+                    timeZone: 'America/Sao_Paulo',
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                }),
+                exitTime: exitTime ? exitTime.toLocaleString('pt-BR', { 
+                    timeZone: 'America/Sao_Paulo',
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                }) : null,
+                entryTimestamp: vehicle.entryTime,
+                exitTimestamp: vehicle.exitTime || null,
+                duration: duration,
+                durationFormatted: durationFormatted,
+                fee: vehicle.fee || 0,
+                estimatedFee: estimatedFee,
+                formattedFee: vehicle.status === 'parked' && estimatedFee ? 
+                    `R$ ${formatBrazilianCurrency(estimatedFee)} (estimado)` : 
+                    `R$ ${formatBrazilianCurrency(vehicle.fee || 0)}`,
+                paymentMethod: vehicle.paymentMethod || 'N/A'
+            };
+        });
+
+        // Calculate summary
+        const parkedVehicles = vehicles.filter(v => v.status === 'parked').length;
+        const exitedVehicles = vehicles.filter(v => v.status === 'exited').length;
+        const totalRevenue = vehicles
+            .filter(v => v.status === 'exited')
+            .reduce((sum, v) => sum + (v.fee || 0), 0);
+
+        const summary = {
+            totalVehicles: vehicles.length,
+            parkedVehicles,
+            exitedVehicles,
+            totalRevenue,
+            formattedRevenue: `R$ ${formatBrazilianCurrency(totalRevenue)}`,
+            period: {
+                start: startDate ? new Date(startDate).toLocaleDateString('pt-BR') : 'Início',
+                end: endDate ? new Date(endDate).toLocaleDateString('pt-BR') : 'Agora'
+            }
+        };
+
+        res.json({
+            success: true,
+            data: {
+                vehicles: processedVehicles,
+                summary,
+                pagination: {
+                    total: vehicles.length,
+                    limit: parseInt(limit),
+                    hasMore: vehicles.length === parseInt(limit)
+                }
+            }
+        });
+
+    } catch (error) {
+        console.error('Error fetching vehicle times report:', error);
+        res.status(500).json({
+            success: false,
+            detail: 'Erro ao buscar relatório de horários'
+        });
+    }
+});
+
 // Start server
 const PORT = process.env.PORT || 8001;
 
