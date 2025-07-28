@@ -60,6 +60,12 @@ export function History() {
         return <ArrowDownLeft className="w-4 h-4 text-red-600" />;
       case 'update':
         return <RefreshCw className="w-4 h-4 text-blue-600" />;
+      case 'reservation_cancelled':
+        return <XCircle className="w-4 h-4 text-red-600" />;
+      case 'reservation_created':
+        return <Calendar className="w-4 h-4 text-blue-600" />;
+      case 'reservation_payment_confirmed':
+        return <Calendar className="w-4 h-4 text-green-600" />;
       default:
         return <Clock className="w-4 h-4 text-gray-600" />;
     }
@@ -73,6 +79,12 @@ export function History() {
         return <Badge className="bg-red-100 text-red-800 border-red-300">Saída</Badge>;
       case 'update':
         return <Badge className="bg-blue-100 text-blue-800 border-blue-300">Atualização</Badge>;
+      case 'reservation_cancelled':
+        return <Badge className="bg-red-100 text-red-800 border-red-300">Reserva Cancelada</Badge>;
+      case 'reservation_created':
+        return <Badge className="bg-blue-100 text-blue-800 border-blue-300">Reserva Criada</Badge>;
+      case 'reservation_payment_confirmed':
+        return <Badge className="bg-green-100 text-green-800 border-green-300">Pagamento Confirmado</Badge>;
       default:
         return <Badge variant="outline">Desconhecido</Badge>;
     }
