@@ -1825,6 +1825,493 @@ app.get('/api/history', async (req, res) => {
     }
 });
 
+// CARD PAYMENT ENDPOINTS
+
+// Create card payment for vehicle exit  
+app.post('/api/payments/card/create', async (req, res) => {
+    try {
+        console.log('Card payment creation request received:', req.body);
+        
+        // Validate request body
+        const { error, value } = cardPaymentSchema.validate(req.body);
+        if (error) {
+            return res.status(400).json({ 
+                success: false, 
+                error: error.details[0].message 
+            });
+        }
+
+        const { vehicleId, payerEmail, payerName, payerCPF, payerPhone, cardToken, cardBrand, cardLastFourDigits, paymentType, installments } = value;
+
+        // Validate CPF
+        if (!validateCPF(payerCPF)) {
+            return res.status(400).json({ 
+                success: false, 
+                error: 'CPF inválido' 
+            });
+        }
+
+        // Get vehicle details
+        const vehiclesCollection = db.collection('vehicles');
+        const vehicle = await vehiclesCollection.findOne({
+            id: vehicleId,
+            status: 'parked'
+        });
+
+        if (!vehicle) {
+            return res.status(404).json({ 
+                success: false, 
+                error: 'Veículo não encontrado ou não está estacionado' 
+            });
+        }
+
+        // Calculate fee
+        const exitTime = new Date();
+        const entryTime = new Date(vehicle.entryTime);
+        const durationMinutes = (exitTime - entryTime) / (1000 * 60);
+        const ratePerMinute = vehicle.type === 'car' ? (10 / 60) : (7 / 60);
+        const fee = Math.max(durationMinutes * ratePerMinute, 1); // Minimum R$1
+        
+        console.log('Card Payment calculation:', {
+            vehicleId,
+            entryTime: vehicle.entryTime,
+            exitTime: exitTime.toISOString(),
+            durationMinutes,
+            ratePerMinute,
+            fee,
+            feeRounded: parseFloat(fee.toFixed(2))
+        });
+
+        // Create card payment
+        const payerData = {
+            name: payerName,
+            email: payerEmail,
+            cpf: payerCPF,
+            phone: payerPhone
+        };
+
+        const cardData = {
+            cardToken,
+            cardBrand,
+            cardLastFourDigits,
+            paymentType,
+            installments: paymentType === 'credit' ? installments : 1
+        };
+
+        const payment = await createCardPayment(parseFloat(fee.toFixed(2)), payerData, cardData, vehicleId);
+
+        // Store payment info in database
+        const paymentsCollection = db.collection('payments');
+        const paymentRecord = {
+            id: uuidv4(),
+            paymentId: payment.id,
+            vehicleId: vehicleId,
+            plate: vehicle.plate,
+            amount: fee,
+            status: payment.status, // approved, rejected, etc.
+            paymentType: 'CARD',
+            cardBrand: cardBrand,
+            cardLastFourDigits: cardLastFourDigits,
+            payerEmail: payerEmail,
+            payerName: payerName,
+            payerCPF: payerCPF,
+            createdAt: new Date().toISOString(),
+            expiresAt: new Date(Date.now() + 30 * 60 * 1000).toISOString() // 30 minutes
+        };
+
+        await paymentsCollection.insertOne(paymentRecord);
+
+        // If payment is immediately approved (common with cards), auto-process exit
+        if (payment.status === 'approved') {
+            await processVehicleExit(vehicleId, payment.id, 'CARD');
+            console.log('Card payment approved immediately, vehicle exit processed automatically');
+        }
+
+        console.log('Card payment created successfully, returning response...');
+
+        res.json({
+            success: true,
+            data: {
+                paymentId: payment.id,
+                amount: fee,
+                formattedAmount: `R$ ${formatBrazilianCurrency(fee)}`,
+                status: payment.status,
+                autoProcessed: payment.status === 'approved',
+                vehicle: {
+                    plate: vehicle.plate,
+                    spot: vehicle.spot,
+                    type: vehicle.type
+                },
+                card: {
+                    brand: cardBrand,
+                    lastFourDigits: cardLastFourDigits,
+                    paymentType: paymentType,
+                    installments: cardData.installments
+                }
+            }
+        });
+
+    } catch (error) {
+        console.error('Error creating card payment:', error);
+        res.status(500).json({ 
+            success: false, 
+            error: 'Erro ao criar pagamento com cartão: ' + error.message 
+        });
+    }
+});
+
+// Check card payment status
+app.get('/api/payments/card/status/:paymentId', async (req, res) => {
+    try {
+        const { paymentId } = req.params;
+        console.log('Checking card payment status for:', paymentId);
+
+        // Get payment from Mercado Pago
+        const payment = await paymentClient.get({ id: paymentId });
+
+        // Update local database
+        const paymentsCollection = db.collection('payments');
+        await paymentsCollection.updateOne(
+            { paymentId: paymentId },
+            { 
+                $set: { 
+                    status: payment.status,
+                    updatedAt: new Date().toISOString()
+                } 
+            }
+        );
+
+        res.json({
+            success: true,
+            data: {
+                paymentId: paymentId,
+                status: payment.status,
+                statusDetail: payment.status_detail,
+                transactionAmount: payment.transaction_amount,
+                paidAmount: payment.transaction_details?.net_received_amount || 0,
+                paymentTypeId: payment.payment_type_id,
+                dateApproved: payment.date_approved,
+                dateCreated: payment.date_created
+            }
+        });
+
+    } catch (error) {
+        console.error('Error checking card payment status:', error);
+        res.status(500).json({ 
+            success: false, 
+            error: 'Erro ao verificar status do pagamento: ' + error.message 
+        });
+    }
+});
+
+// Confirm card payment and process vehicle exit
+app.post('/api/payments/card/confirm', async (req, res) => {
+    try {
+        // Validate request body
+        const { error, value } = paymentConfirmationSchema.validate(req.body);
+        if (error) {
+            return res.status(400).json({ 
+                success: false, 
+                error: error.details[0].message 
+            });
+        }
+
+        const { paymentId, vehicleId } = value;
+
+        // Get payment status from Mercado Pago
+        const payment = await paymentClient.get({ id: paymentId });
+
+        if (payment.status !== 'approved') {
+            return res.status(400).json({ 
+                success: false, 
+                error: 'Pagamento ainda não foi confirmado' 
+            });
+        }
+
+        // Process vehicle exit
+        const exitResult = await processVehicleExit(vehicleId, paymentId, 'CARD');
+
+        res.json({
+            success: true,
+            message: exitResult.message,
+            data: exitResult.data
+        });
+
+    } catch (error) {
+        console.error('Error confirming card payment:', error);
+        res.status(500).json({ 
+            success: false, 
+            error: 'Erro ao confirmar pagamento: ' + error.message 
+        });
+    }
+});
+
+// WEBHOOK ENDPOINT FOR AUTOMATIC PAYMENT PROCESSING
+app.post('/api/webhook/mercadopago', async (req, res) => {
+    try {
+        console.log('Mercado Pago webhook received:', req.body);
+        
+        const { type, action, data } = req.body;
+        
+        // Only process payment notifications
+        if (type === 'payment' && action === 'payment.updated') {
+            const paymentId = data.id;
+            
+            try {
+                // Get payment details from Mercado Pago
+                const payment = await paymentClient.get({ id: paymentId });
+                console.log('Webhook payment details:', payment);
+                
+                // Find payment record in database
+                const paymentsCollection = db.collection('payments');
+                const paymentRecord = await paymentsCollection.findOne({ paymentId: paymentId });
+                
+                if (paymentRecord) {
+                    // Update payment status in database
+                    await paymentsCollection.updateOne(
+                        { paymentId: paymentId },
+                        { 
+                            $set: { 
+                                status: payment.status,
+                                updatedAt: new Date().toISOString()
+                            } 
+                        }
+                    );
+                    
+                    // If payment is approved, automatically process vehicle exit
+                    if (payment.status === 'approved' && paymentRecord.vehicleId) {
+                        console.log('Payment approved via webhook, processing automatic exit for vehicle:', paymentRecord.vehicleId);
+                        
+                        const paymentType = paymentRecord.paymentType || 'PIX';
+                        await processVehicleExit(paymentRecord.vehicleId, paymentId, paymentType);
+                        
+                        console.log('Automatic vehicle exit processed successfully');
+                    }
+                }
+                
+            } catch (error) {
+                console.error('Error processing webhook payment:', error);
+            }
+        }
+        
+        // Always respond OK to Mercado Pago
+        res.status(200).send('OK');
+        
+    } catch (error) {
+        console.error('Error processing webhook:', error);
+        res.status(200).send('OK'); // Always respond OK even on error
+    }
+});
+
+// "JA PAGUEI" VERIFICATION ENDPOINT
+app.post('/api/payments/verify-payment', async (req, res) => {
+    try {
+        const { vehicleId } = req.body;
+        
+        if (!vehicleId) {
+            return res.status(400).json({
+                success: false,
+                error: 'ID do veículo é obrigatório'
+            });
+        }
+
+        // Check if vehicle exists and is parked
+        const vehiclesCollection = db.collection('vehicles');
+        const vehicle = await vehiclesCollection.findOne({
+            id: vehicleId,
+            status: 'parked'
+        });
+
+        if (!vehicle) {
+            return res.status(404).json({
+                success: false,
+                error: 'Veículo não encontrado ou não está estacionado'
+            });
+        }
+
+        // Look for payments for this vehicle
+        const paymentsCollection = db.collection('payments');
+        const payments = await paymentsCollection
+            .find({ vehicleId: vehicleId })
+            .sort({ createdAt: -1 })
+            .toArray();
+
+        if (!payments.length) {
+            return res.status(404).json({
+                success: false,
+                error: 'Nenhum pagamento encontrado para este veículo'
+            });
+        }
+
+        // Check each payment with Mercado Pago to verify real status
+        for (const payment of payments) {
+            try {
+                console.log('Verifying payment status:', payment.paymentId);
+                const mpPayment = await paymentClient.get({ id: payment.paymentId });
+                
+                // Update local status
+                await paymentsCollection.updateOne(
+                    { paymentId: payment.paymentId },
+                    { 
+                        $set: { 
+                            status: mpPayment.status,
+                            updatedAt: new Date().toISOString()
+                        } 
+                    }
+                );
+                
+                // If we find an approved payment, process exit automatically
+                if (mpPayment.status === 'approved') {
+                    console.log('Found approved payment, processing automatic exit...');
+                    
+                    const paymentType = payment.paymentType || 'PIX';
+                    const exitResult = await processVehicleExit(vehicleId, payment.paymentId, paymentType);
+                    
+                    return res.json({
+                        success: true,
+                        message: 'Pagamento confirmado! Saída processada automaticamente.',
+                        data: {
+                            paymentVerified: true,
+                            paymentId: payment.paymentId,
+                            paymentStatus: mpPayment.status,
+                            autoProcessed: true,
+                            ...exitResult.data
+                        }
+                    });
+                }
+                
+            } catch (error) {
+                console.error('Error verifying payment:', payment.paymentId, error);
+                continue; // Continue checking other payments
+            }
+        }
+
+        // No approved payments found
+        return res.json({
+            success: false,
+            message: 'Nenhum pagamento aprovado encontrado',
+            data: {
+                paymentVerified: false,
+                paymentsFound: payments.length,
+                lastPaymentStatus: payments[0].status
+            }
+        });
+
+    } catch (error) {
+        console.error('Error verifying payment:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Erro ao verificar pagamento: ' + error.message
+        });
+    }
+});
+
+// HELPER FUNCTION TO PROCESS VEHICLE EXIT (USED BY WEBHOOKS AND CONFIRMATIONS)
+async function processVehicleExit(vehicleId, paymentId, paymentMethod) {
+    const vehiclesCollection = db.collection('vehicles');
+    const paymentsCollection = db.collection('payments');
+    const spotsCollection = db.collection('parking_spots');
+    const operationsCollection = db.collection('operations_history');
+    
+    // Get vehicle and payment data
+    const vehicle = await vehiclesCollection.findOne({
+        id: vehicleId,
+        status: 'parked'
+    });
+
+    if (!vehicle) {
+        throw new Error('Veículo não encontrado');
+    }
+
+    const paymentRecord = await paymentsCollection.findOne({
+        paymentId: paymentId,
+        vehicleId: vehicleId
+    });
+
+    if (!paymentRecord) {
+        throw new Error('Registro de pagamento não encontrado');
+    }
+
+    const exitTime = new Date();
+    const entryTime = new Date(vehicle.entryTime);
+    const durationMinutes = (exitTime - entryTime) / (1000 * 60);
+    const durationHours = durationMinutes / 60;
+
+    // Update vehicle status
+    await vehiclesCollection.updateOne(
+        { id: vehicleId },
+        {
+            $set: {
+                status: 'exited',
+                exitTime: exitTime.toISOString(),
+                fee: paymentRecord.amount,
+                duration: durationHours,
+                paymentMethod: paymentMethod,
+                paymentId: paymentId
+            }
+        }
+    );
+
+    // Free parking spot
+    await spotsCollection.updateOne(
+        { id: vehicle.spot },
+        {
+            $set: {
+                isOccupied: false,
+                vehicleId: null
+            }
+        }
+    );
+
+    // Update payment status
+    await paymentsCollection.updateOne(
+        { paymentId: paymentId },
+        {
+            $set: {
+                status: 'completed',
+                completedAt: exitTime.toISOString()
+            }
+        }
+    );
+
+    // Log operation
+    await operationsCollection.insertOne({
+        id: uuidv4(),
+        type: 'exit',
+        vehicleId: vehicleId,
+        plate: vehicle.plate,
+        spot: vehicle.spot,
+        timestamp: exitTime.toISOString(),
+        data: {
+            entryTime: vehicle.entryTime,
+            exitTime: exitTime.toISOString(),
+            duration: durationHours,
+            fee: paymentRecord.amount,
+            paymentMethod: paymentMethod,
+            paymentId: paymentId,
+            automaticExit: true
+        }
+    });
+
+    console.log(`✅ Vehicle exit processed automatically: ${vehicle.plate} - ${paymentMethod} - R$ ${formatBrazilianCurrency(paymentRecord.amount)}`);
+
+    return {
+        message: `Pagamento ${paymentMethod} confirmado! Saída processada para ${vehicle.plate}`,
+        data: {
+            plate: vehicle.plate,
+            spot: vehicle.spot,
+            duration: `${formatBrazilianDecimal(durationHours)}h`,
+            fee: `R$ ${formatBrazilianCurrency(paymentRecord.amount)}`,
+            paymentMethod: paymentMethod,
+            exitTime: exitTime.toLocaleTimeString('pt-BR', { 
+                timeZone: 'America/Sao_Paulo',
+                hour: '2-digit', 
+                minute: '2-digit' 
+            })
+        }
+    };
+}
+
 // Start server
 const PORT = process.env.PORT || 8001;
 
