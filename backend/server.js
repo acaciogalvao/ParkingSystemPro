@@ -657,7 +657,7 @@ app.post('/api/reservations/:reservationId/create-pix-payment', async (req, res)
         const { reservationId } = req.params;
         
         // Validate request body
-        const { error, value } = pixPaymentSchema.validate(req.body);
+        const { error, value } = reservationPixPaymentSchema.validate(req.body);
         if (error) {
             return res.status(400).json({
                 success: false,
