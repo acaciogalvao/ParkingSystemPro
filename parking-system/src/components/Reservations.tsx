@@ -252,6 +252,8 @@ export function Reservations() {
   const handleInputChange = (field: keyof NewReservation, value: string | number) => {
     if (field === 'plate') {
       value = formatPlateInput(value as string);
+    } else if (field === 'payerCPF') {
+      value = formatCPF(value as string);
     }
     
     setNewReservation(prev => ({
