@@ -1,0 +1,65 @@
+version: '3.8'
+
+services:
+  # MongoDB Database
+  mongodb:
+    image: mongo:7.0
+    container_name: parksystem-mongodb
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_DATABASE: parkingsystempro
+    volumes:
+      - mongodb_data:/data/db
+      - ./scripts/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
+    networks:
+      - parksystem-network
+
+  # Backend API
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: parksystem-backend
+    restart: unless-stopped
+    ports:
+      - "8001:8001"
+    environment:
+      - NODE_ENV=production
+      - MONGO_URL=mongodb://mongodb:27017/parkingsystempro
+      - PORT=8001
+    depends_on:
+      - mongodb
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+    networks:
+      - parksystem-network
+
+  # Frontend
+  frontend:
+    build:
+      context: ./parking-system
+      dockerfile: Dockerfile
+    container_name: parksystem-frontend
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - VITE_BACKEND_URL=http://localhost:8001/api
+    depends_on:
+      - backend
+    volumes:
+      - ./parking-system:/app
+      - /app/node_modules
+    networks:
+      - parksystem-network
+
+volumes:
+  mongodb_data:
+    driver: local
+
+networks:
+  parksystem-network:
+    driver: bridge
