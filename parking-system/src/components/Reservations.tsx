@@ -72,6 +72,35 @@ interface NewReservation {
   payerCPF: string;
 }
 
+// Função para validar CPF
+const validateCPF = (cpf: string): boolean => {
+  cpf = cpf.replace(/\D/g, '');
+  
+  if (cpf.length !== 11 || /^(\d)\1+$/.test(cpf)) {
+    return false;
+  }
+  
+  let sum = 0;
+  for (let i = 0; i < 9; i++) {
+    sum += parseInt(cpf[i]) * (10 - i);
+  }
+  let digit1 = (sum * 10) % 11;
+  if (digit1 === 10) digit1 = 0;
+  
+  if (parseInt(cpf[9]) !== digit1) {
+    return false;
+  }
+  
+  sum = 0;
+  for (let i = 0; i < 10; i++) {
+    sum += parseInt(cpf[i]) * (11 - i);
+  }
+  let digit2 = (sum * 10) % 11;
+  if (digit2 === 10) digit2 = 0;
+  
+  return parseInt(cpf[10]) === digit2;
+};
+
 export function Reservations() {
   const [reservations, setReservations] = useState<Reservation[]>([]);
   const [loading, setLoading] = useState(true);
