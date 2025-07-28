@@ -398,6 +398,452 @@ function validateCPF(cpf) {
 
 // API Routes
 
+// RESERVATION ENDPOINTS
+
+// Get all reservations
+app.get('/api/reservations', async (req, res) => {
+    try {
+        const reservationsCollection = db.collection('reservations');
+        const reservations = await reservationsCollection.find({}).sort({ createdAt: -1 }).toArray();
+        
+        const formattedReservations = reservations.map(reservation => {
+            const startDateTime = new Date(reservation.reservationDateTime);
+            const endDateTime = new Date(startDateTime.getTime() + (reservation.duration * 60 * 60 * 1000));
+            
+            return {
+                id: reservation.id,
+                vehicleType: reservation.vehicleType,
+                plate: reservation.plate,
+                ownerName: reservation.ownerName,
+                ownerPhone: reservation.ownerPhone,
+                reservationDateTime: reservation.reservationDateTime,
+                duration: reservation.duration,
+                fee: reservation.fee,
+                formattedFee: `R$ ${formatBrazilianCurrency(reservation.fee)}`,
+                status: reservation.status,
+                createdAt: reservation.createdAt,
+                expiresAt: reservation.expiresAt,
+                formattedDateTime: startDateTime.toLocaleString('pt-BR', { 
+                    timeZone: 'America/Sao_Paulo',
+                    day: '2-digit',
+                    month: '2-digit', 
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                }),
+                endDateTime: endDateTime.toISOString(),
+                formattedEndDateTime: endDateTime.toLocaleString('pt-BR', { 
+                    timeZone: 'America/Sao_Paulo',
+                    day: '2-digit',
+                    month: '2-digit', 
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                }),
+                paymentId: reservation.paymentId,
+                vehicleId: reservation.vehicleId,
+                spot: reservation.spot
+            };
+        });
+        
+        res.json({
+            success: true,
+            data: formattedReservations
+        });
+    } catch (error) {
+        console.error('Error fetching reservations:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Erro ao buscar reservas'
+        });
+    }
+});
+
+// Create new reservation
+app.post('/api/reservations/create', async (req, res) => {
+    try {
+        // Validate request body
+        const { error, value } = reservationSchema.validate(req.body);
+        if (error) {
+            return res.status(400).json({
+                success: false,
+                error: error.details[0].message
+            });
+        }
+
+        const reservation = value;
+
+        // Validate plate
+        const plateValidation = validateBrazilianPlate(reservation.plate);
+        if (!plateValidation.isValid) {
+            return res.status(400).json({
+                success: false,
+                error: plateValidation.error
+            });
+        }
+
+        // Create reservation datetime
+        const reservationDateTime = new Date(`${reservation.reservationDate}T${reservation.reservationTime}:00`);
+        
+        // Check if reservation is for future time
+        if (reservationDateTime <= new Date()) {
+            return res.status(400).json({
+                success: false,
+                error: 'A reserva deve ser para uma data e hora futura'
+            });
+        }
+
+        // Calculate fee
+        const hourlyRate = reservation.vehicleType === 'car' ? 10 : 7;
+        const fee = hourlyRate * reservation.duration;
+
+        // Create reservation
+        const reservationId = uuidv4();
+        const currentTime = new Date();
+        const expiresAt = new Date(currentTime.getTime() + 30 * 60 * 1000); // 30 minutes to pay
+
+        const reservationData = {
+            id: reservationId,
+            vehicleType: reservation.vehicleType,
+            plate: reservation.plate.toUpperCase(),
+            ownerName: reservation.ownerName,
+            ownerPhone: reservation.ownerPhone,
+            reservationDateTime: reservationDateTime.toISOString(),
+            duration: reservation.duration,
+            fee: fee,
+            status: 'pending_payment',
+            createdAt: currentTime.toISOString(),
+            expiresAt: expiresAt.toISOString(),
+            payerEmail: reservation.payerEmail,
+            payerCPF: reservation.payerCPF,
+            paymentId: null,
+            vehicleId: null,
+            spot: null
+        };
+
+        // Insert reservation
+        const reservationsCollection = db.collection('reservations');
+        await reservationsCollection.insertOne(reservationData);
+
+        // Log operation
+        const operationsCollection = db.collection('operations_history');
+        await operationsCollection.insertOne({
+            id: uuidv4(),
+            type: 'reservation_created',
+            vehicleId: null,
+            plate: reservation.plate.toUpperCase(),
+            spot: null,
+            timestamp: currentTime.toISOString(),
+            data: reservationData
+        });
+
+        res.json({
+            success: true,
+            message: 'Reserva criada com sucesso! Realize o pagamento para confirmar.',
+            data: {
+                reservationId: reservationId,
+                amount: fee,
+                formattedAmount: `R$ ${formatBrazilianCurrency(fee)}`,
+                expiresAt: expiresAt.toISOString(),
+                vehicle: {
+                    plate: reservation.plate.toUpperCase(),
+                    type: reservation.vehicleType,
+                    owner: reservation.ownerName
+                }
+            }
+        });
+
+    } catch (error) {
+        console.error('Error creating reservation:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Erro ao criar reserva'
+        });
+    }
+});
+
+// Cancel reservation
+app.post('/api/reservations/:reservationId/cancel', async (req, res) => {
+    try {
+        const { reservationId } = req.params;
+        
+        const reservationsCollection = db.collection('reservations');
+        const reservation = await reservationsCollection.findOne({ id: reservationId });
+        
+        if (!reservation) {
+            return res.status(404).json({
+                success: false,
+                error: 'Reserva não encontrada'
+            });
+        }
+
+        // Check if reservation can be cancelled
+        if (reservation.status === 'cancelled') {
+            return res.status(400).json({
+                success: false,
+                error: 'Reserva já foi cancelada'
+            });
+        }
+
+        if (reservation.status === 'active') {
+            return res.status(400).json({
+                success: false,
+                error: 'Não é possível cancelar uma reserva ativa'
+            });
+        }
+
+        // Update reservation status
+        await reservationsCollection.updateOne(
+            { id: reservationId },
+            {
+                $set: {
+                    status: 'cancelled',
+                    cancelledAt: new Date().toISOString()
+                }
+            }
+        );
+
+        // Free reserved spot if any
+        if (reservation.spot) {
+            const spotsCollection = db.collection('parking_spots');
+            await spotsCollection.updateOne(
+                { id: reservation.spot },
+                {
+                    $set: {
+                        isReserved: false,
+                        reservationId: null
+                    }
+                }
+            );
+        }
+
+        // Log operation
+        const operationsCollection = db.collection('operations_history');
+        await operationsCollection.insertOne({
+            id: uuidv4(),
+            type: 'reservation_cancelled',
+            vehicleId: reservation.vehicleId,
+            plate: reservation.plate,
+            spot: reservation.spot,
+            timestamp: new Date().toISOString(),
+            data: { reservationId: reservationId, reason: 'user_cancelled' }
+        });
+
+        res.json({
+            success: true,
+            message: 'Reserva cancelada com sucesso'
+        });
+
+    } catch (error) {
+        console.error('Error cancelling reservation:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Erro ao cancelar reserva'
+        });
+    }
+});
+
+// Create PIX payment for reservation
+app.post('/api/reservations/:reservationId/create-pix-payment', async (req, res) => {
+    try {
+        const { reservationId } = req.params;
+        
+        // Validate request body
+        const { error, value } = pixPaymentSchema.validate(req.body);
+        if (error) {
+            return res.status(400).json({
+                success: false,
+                error: error.details[0].message
+            });
+        }
+
+        const { payerEmail, payerName, payerCPF, payerPhone } = value;
+
+        // Validate CPF
+        if (!validateCPF(payerCPF)) {
+            return res.status(400).json({
+                success: false,
+                error: 'CPF inválido'
+            });
+        }
+
+        // Get reservation details
+        const reservationsCollection = db.collection('reservations');
+        const reservation = await reservationsCollection.findOne({ id: reservationId });
+
+        if (!reservation) {
+            return res.status(404).json({
+                success: false,
+                error: 'Reserva não encontrada'
+            });
+        }
+
+        if (reservation.status !== 'pending_payment') {
+            return res.status(400).json({
+                success: false,
+                error: 'Reserva não está pendente de pagamento'
+            });
+        }
+
+        // Create PIX payment
+        const payerData = {
+            name: payerName,
+            email: payerEmail,
+            cpf: payerCPF,
+            phone: payerPhone
+        };
+
+        const payment = await createPixPayment(reservation.fee, payerData, reservationId);
+
+        // Store payment info in database
+        const paymentsCollection = db.collection('payments');
+        const paymentRecord = {
+            id: uuidv4(),
+            paymentId: payment.id,
+            reservationId: reservationId,
+            vehicleId: null,
+            plate: reservation.plate,
+            amount: reservation.fee,
+            status: 'pending',
+            pixCode: payment.point_of_interaction?.transaction_data?.qr_code,
+            pixCodeBase64: payment.point_of_interaction?.transaction_data?.qr_code_base64,
+            ticketUrl: payment.point_of_interaction?.transaction_data?.ticket_url,
+            payerEmail: payerEmail,
+            payerName: payerName,
+            payerCPF: payerCPF,
+            createdAt: new Date().toISOString(),
+            expiresAt: new Date(Date.now() + 30 * 60 * 1000).toISOString() // 30 minutes
+        };
+
+        await paymentsCollection.insertOne(paymentRecord);
+
+        // Update reservation with payment ID
+        await reservationsCollection.updateOne(
+            { id: reservationId },
+            {
+                $set: {
+                    paymentId: payment.id,
+                    updatedAt: new Date().toISOString()
+                }
+            }
+        );
+
+        res.json({
+            success: true,
+            data: {
+                paymentId: payment.id,
+                reservationId: reservationId,
+                amount: reservation.fee,
+                formattedAmount: `R$ ${formatBrazilianCurrency(reservation.fee)}`,
+                pixCode: payment.point_of_interaction?.transaction_data?.qr_code,
+                pixCodeBase64: payment.point_of_interaction?.transaction_data?.qr_code_base64,
+                ticketUrl: payment.point_of_interaction?.transaction_data?.ticket_url,
+                expiresAt: paymentRecord.expiresAt
+            }
+        });
+
+    } catch (error) {
+        console.error('Error creating PIX payment for reservation:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Erro ao criar pagamento PIX: ' + error.message
+        });
+    }
+});
+
+// Confirm reservation payment
+app.post('/api/reservations/:reservationId/confirm-payment', async (req, res) => {
+    try {
+        const { reservationId } = req.params;
+        const { paymentId } = req.body;
+
+        if (!paymentId) {
+            return res.status(400).json({
+                success: false,
+                error: 'Payment ID é obrigatório'
+            });
+        }
+
+        // Get payment status from Mercado Pago
+        const payment = await paymentClient.get({ id: paymentId });
+
+        if (payment.status !== 'approved') {
+            return res.status(400).json({
+                success: false,
+                error: 'Pagamento ainda não foi confirmado'
+            });
+        }
+
+        // Get reservation
+        const reservationsCollection = db.collection('reservations');
+        const reservation = await reservationsCollection.findOne({ id: reservationId });
+
+        if (!reservation) {
+            return res.status(404).json({
+                success: false,
+                error: 'Reserva não encontrada'
+            });
+        }
+
+        // Update reservation status
+        await reservationsCollection.updateOne(
+            { id: reservationId },
+            {
+                $set: {
+                    status: 'confirmed',
+                    paymentConfirmedAt: new Date().toISOString()
+                }
+            }
+        );
+
+        // Update payment status
+        const paymentsCollection = db.collection('payments');
+        await paymentsCollection.updateOne(
+            { paymentId: paymentId },
+            {
+                $set: {
+                    status: 'completed',
+                    completedAt: new Date().toISOString()
+                }
+            }
+        );
+
+        // Log operation
+        const operationsCollection = db.collection('operations_history');
+        await operationsCollection.insertOne({
+            id: uuidv4(),
+            type: 'reservation_payment_confirmed',
+            vehicleId: null,
+            plate: reservation.plate,
+            spot: null,
+            timestamp: new Date().toISOString(),
+            data: {
+                reservationId: reservationId,
+                paymentId: paymentId,
+                amount: reservation.fee
+            }
+        });
+
+        res.json({
+            success: true,
+            message: 'Pagamento confirmado! Reserva ativada com sucesso.',
+            data: {
+                reservationId: reservationId,
+                status: 'confirmed',
+                amount: reservation.fee,
+                formattedAmount: `R$ ${formatBrazilianCurrency(reservation.fee)}`
+            }
+        });
+
+    } catch (error) {
+        console.error('Error confirming reservation payment:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Erro ao confirmar pagamento: ' + error.message
+        });
+    }
+});
+
 // Health check endpoint
 app.get('/api/health', (req, res) => {
     res.json({
