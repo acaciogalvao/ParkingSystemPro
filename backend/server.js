@@ -809,6 +809,116 @@ app.post('/api/payments/pix/confirm', async (req, res) => {
     }
 });
 
+// Process vehicle exit (manual exit without payment)
+app.post('/api/vehicles/exit', async (req, res) => {
+    try {
+        // Validate request body
+        const { error, value } = vehicleExitSchema.validate(req.body);
+        if (error) {
+            return res.status(400).json({ detail: error.details[0].message });
+        }
+
+        const { vehicleId } = value;
+
+        // Get vehicle details
+        const vehiclesCollection = db.collection('vehicles');
+        const vehicle = await vehiclesCollection.findOne({
+            id: vehicleId,
+            status: 'parked'
+        });
+
+        if (!vehicle) {
+            return res.status(404).json({ detail: 'Veículo não encontrado ou não está estacionado' });
+        }
+
+        const exitTime = new Date();
+        const entryTime = new Date(vehicle.entryTime);
+        const durationMinutes = (exitTime - entryTime) / (1000 * 60);
+        const durationHours = durationMinutes / 60;
+        
+        // Calculate fee based on vehicle type
+        const ratePerMinute = vehicle.type === 'car' ? (10 / 60) : (7 / 60);
+        const fee = Math.max(durationMinutes * ratePerMinute, 1); // Minimum R$1
+
+        console.log('Manual exit calculation:', {
+            vehicleId,
+            plate: vehicle.plate,
+            entryTime: vehicle.entryTime,
+            exitTime: exitTime.toISOString(),
+            durationMinutes,
+            durationHours,
+            ratePerMinute,
+            fee
+        });
+        
+        // Update vehicle status
+        await vehiclesCollection.updateOne(
+            { id: vehicleId },
+            {
+                $set: {
+                    status: 'exited',
+                    exitTime: exitTime.toISOString(),
+                    fee: fee,
+                    duration: durationHours,
+                    paymentMethod: 'CASH', // Default to cash for manual exits
+                    paymentId: null
+                }
+            }
+        );
+
+        // Free parking spot
+        const spotsCollection = db.collection('parking_spots');
+        await spotsCollection.updateOne(
+            { id: vehicle.spot },
+            {
+                $set: {
+                    isOccupied: false,
+                    vehicleId: null
+                }
+            }
+        );
+
+        // Log operation
+        const operationsCollection = db.collection('operations_history');
+        await operationsCollection.insertOne({
+            id: uuidv4(),
+            type: 'exit',
+            vehicleId: vehicleId,
+            plate: vehicle.plate,
+            spot: vehicle.spot,
+            timestamp: exitTime.toISOString(),
+            data: {
+                entryTime: vehicle.entryTime,
+                exitTime: exitTime.toISOString(),
+                duration: durationHours,
+                fee: fee,
+                paymentMethod: 'CASH'
+            }
+        });
+
+        res.json({
+            success: true,
+            message: `Saída processada para ${vehicle.plate}`,
+            data: {
+                plate: vehicle.plate,
+                spot: vehicle.spot,
+                duration: `${formatBrazilianDecimal(durationHours)}h`,
+                fee: `R$ ${formatBrazilianCurrency(fee)}`,
+                paymentMethod: 'CASH',
+                exitTime: exitTime.toLocaleTimeString('pt-BR', { 
+                    timeZone: 'America/Sao_Paulo',
+                    hour: '2-digit', 
+                    minute: '2-digit' 
+                })
+            }
+        });
+
+    } catch (error) {
+        console.error('Error processing vehicle exit:', error);
+        res.status(500).json({ detail: `Erro ao processar saída: ${error.message}` });
+    }
+});
+
 // Get all parked vehicles
 app.get('/api/vehicles', async (req, res) => {
     try {
