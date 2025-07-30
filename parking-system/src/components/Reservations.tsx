@@ -325,6 +325,47 @@ export function Reservations() {
     }
   };
 
+  // Function to check if plate already exists
+  const checkPlateExists = async (plate: string) => {
+    if (!plate.trim() || !validateBrazilianPlate(plate).isValid) {
+      setPlateExists({ exists: false, message: null });
+      return;
+    }
+
+    setPlateCheckLoading(true);
+    try {
+      const response = await fetch(`${backendUrl}/reservations`);
+      const data = await response.json();
+      
+      if (data.success) {
+        const activeReservations = data.data.filter((res: Reservation) => 
+          res.plate.toUpperCase() === plate.toUpperCase() && 
+          ['pending_payment', 'confirmed', 'active'].includes(res.status)
+        );
+
+        if (activeReservations.length > 0) {
+          const reservation = activeReservations[0];
+          const statusMessages = {
+            'pending_payment': 'pendente de pagamento',
+            'confirmed': 'confirmada',
+            'active': 'ativa'
+          };
+          setPlateExists({ 
+            exists: true, 
+            message: `Esta placa já possui uma reserva ${statusMessages[reservation.status as keyof typeof statusMessages]}. Finalize ou cancele a reserva anterior.`
+          });
+        } else {
+          setPlateExists({ exists: false, message: null });
+        }
+      }
+    } catch (error) {
+      console.error('Error checking plate:', error);
+      setPlateExists({ exists: false, message: null });
+    } finally {
+      setPlateCheckLoading(false);
+    }
+  };
+
   const handleInputChange = (field: keyof NewReservation, value: string | number) => {
     if (field === 'plate') {
       const formattedValue = formatPlateInput(value as string);
