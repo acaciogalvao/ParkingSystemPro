@@ -1309,21 +1309,39 @@ export function Reservations() {
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <div className="flex items-center gap-2">
                     <Calendar className="h-4 w-4 text-muted-foreground" />
-                    <span>{reservation.formattedDateTime}</span>
+                    <div>
+                      <p className="text-xs text-muted-foreground">Agendado para:</p>
+                      <span className="font-medium">{reservation.formattedDateTime}</span>
+                    </div>
                   </div>
                   <div className="flex items-center gap-2">
                     <Clock className="h-4 w-4 text-muted-foreground" />
-                    <span>{reservation.duration}h de duração</span>
+                    <div>
+                      <p className="text-xs text-muted-foreground">Duração:</p>
+                      <span className="font-medium">{reservation.duration}h</span>
+                    </div>
                   </div>
+                  {reservation.formattedCreatedAt && (
+                    <div className="flex items-center gap-2 col-span-2">
+                      <Clock className="h-4 w-4 text-blue-600" />
+                      <div>
+                        <p className="text-xs text-blue-600">Reserva criada em:</p>
+                        <span className="text-sm font-medium text-blue-700">{reservation.formattedCreatedAt}</span>
+                      </div>
+                    </div>
+                  )}
                   {reservation.spot && (
                     <div className="flex items-center gap-2">
                       <MapPin className="h-4 w-4 text-muted-foreground" />
-                      <span>Vaga {reservation.spot}</span>
+                      <div>
+                        <p className="text-xs text-muted-foreground">Vaga:</p>
+                        <span className="font-medium">{reservation.spot}</span>
+                      </div>
                     </div>
                   )}
                   <div className="flex items-center gap-2">
-                    <span className="text-muted-foreground">Término:</span>
-                    <span>{reservation.formattedEndDateTime}</span>
+                    <span className="text-xs text-muted-foreground">Término:</span>
+                    <span className="text-sm font-medium">{reservation.formattedEndDateTime}</span>
                   </div>
                 </div>
 
