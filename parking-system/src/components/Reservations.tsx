@@ -183,6 +183,9 @@ export function Reservations() {
   const [timeLeft, setTimeLeft] = useState<number>(0);
   const [paymentStep, setPaymentStep] = useState<'form' | 'qr' | 'checking'>('form');
   const [plateValidation, setPlateValidation] = useState<{ isValid: boolean; type: string | null; error: string | null }>({ isValid: false, type: null, error: null });
+  const [plateCheckLoading, setPlateCheckLoading] = useState(false);
+  const [plateExists, setPlateExists] = useState<{ exists: boolean; message: string | null }>({ exists: false, message: null });
+  const [currentTime, setCurrentTime] = useState<string>('');
   const [newReservation, setNewReservation] = useState<NewReservation>({
     vehicleType: 'car',
     plate: '',
