@@ -838,25 +838,45 @@ export function Reservations() {
                   placeholder="ABC-1234 ou ABC1A12"
                   maxLength={newReservation.plate.includes('-') ? 8 : 7}
                   className={`text-center text-lg font-mono tracking-wider ${
-                    plateValidation.error 
+                    plateExists.exists
+                      ? 'border-red-500 focus:border-red-500 focus:ring-red-500'
+                      : plateValidation.error 
                       ? 'border-red-500 focus:border-red-500 focus:ring-red-500' 
                       : plateValidation.isValid 
                       ? 'border-green-500 focus:border-green-500 focus:ring-green-500' 
                       : ''
                   }`}
+                  disabled={plateCheckLoading}
                 />
-                {plateValidation.error && (
+                
+                {plateCheckLoading && (
+                  <p className="text-sm text-blue-600 flex items-center gap-1 mt-1">
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Verificando placa...
+                  </p>
+                )}
+                
+                {plateExists.exists && (
+                  <p className="text-sm text-red-600 flex items-center gap-1 mt-1">
+                    <AlertCircle className="w-4 h-4" />
+                    {plateExists.message}
+                  </p>
+                )}
+                
+                {!plateExists.exists && plateValidation.error && (
                   <p className="text-sm text-red-600 flex items-center gap-1 mt-1">
                     <AlertCircle className="w-4 h-4" />
                     {plateValidation.error}
                   </p>
                 )}
-                {plateValidation.isValid && plateValidation.type && (
+                
+                {!plateExists.exists && plateValidation.isValid && plateValidation.type && (
                   <p className="text-sm text-green-600 flex items-center gap-1 mt-1">
                     <CheckCircle className="w-4 h-4" />
                     Placa válida (formato {plateValidation.type})
                   </p>
                 )}
+                
                 <p className="text-xs text-gray-500 mt-1">
                   Formatos aceitos: ABC-1234 (antigo) ou ABC1A12 (Mercosul)
                 </p>
