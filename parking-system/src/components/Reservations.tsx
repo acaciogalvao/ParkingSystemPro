@@ -769,7 +769,11 @@ export function Reservations() {
                     value={newReservation.ownerPhone}
                     onChange={(e) => handleInputChange('ownerPhone', e.target.value)}
                     placeholder="(11) 99999-9999"
+                    maxLength={15}
                   />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Formato: (XX) XXXXX-XXXX
+                  </p>
                 </div>
               </div>
 
