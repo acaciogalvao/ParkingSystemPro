@@ -469,14 +469,18 @@ export function Reservations() {
           description: "Realize o pagamento para confirmar a reserva.",
         });
 
-        // Reset form and validation
+        // Reset form and validation with current date/time
+        const now = new Date();
+        const currentDate = now.toISOString().split('T')[0];
+        const currentTime = now.toTimeString().slice(0, 5);
+        
         setNewReservation({
           vehicleType: 'car',
           plate: '',
           ownerName: '',
           ownerPhone: '',
-          reservationDate: '',
-          reservationTime: '',
+          reservationDate: currentDate,
+          reservationTime: currentTime,
           duration: 1,
           payerEmail: '',
           payerCPF: ''
