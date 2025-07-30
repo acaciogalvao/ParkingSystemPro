@@ -905,7 +905,15 @@ export function Reservations() {
                 <Button 
                   className="flex-1"
                   onClick={handleCreateReservation}
-                  disabled={creating || !plateValidation.isValid || !newReservation.ownerName.trim() || !newReservation.ownerPhone.trim() || !newReservation.payerEmail.trim() || !newReservation.payerCPF.trim() || !newReservation.reservationDate || !newReservation.reservationTime}
+                  disabled={creating || !plateValidation.isValid || !newReservation.ownerName.trim() || !newReservation.ownerPhone.trim() || !newReservation.payerEmail.trim() || !newReservation.payerCPF.trim() || !newReservation.reservationDate || !newReservation.reservationTime || (() => {
+                    // Check if the selected time is at least 30 minutes from now
+                    if (newReservation.reservationDate && newReservation.reservationTime) {
+                      const reservationDateTime = new Date(`${newReservation.reservationDate}T${newReservation.reservationTime}:00`);
+                      const thirtyMinutesFromNow = new Date(Date.now() + 30 * 60 * 1000);
+                      return reservationDateTime <= thirtyMinutesFromNow;
+                    }
+                    return false;
+                  })()}
                 >
                   {creating && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
                   Criar Reserva
