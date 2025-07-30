@@ -560,7 +560,6 @@ app.post('/api/reservations/create', async (req, res) => {
         };
 
         // Insert reservation
-        const reservationsCollection = db.collection('reservations');
         await reservationsCollection.insertOne(reservationData);
 
         // Log operation
