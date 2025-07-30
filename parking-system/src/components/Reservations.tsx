@@ -101,19 +101,21 @@ const validateCPF = (cpf: string): boolean => {
   return parseInt(cpf[10]) === digit2;
 };
 
-// Formatação de CPF
-const formatCPF = (value: string): string => {
+// Formatação automática de telefone durante digitação
+const formatPhoneInput = (value: string): string => {
+  // Remove tudo que não for número
   const numbersOnly = value.replace(/\D/g, '');
+  
+  // Limita a 11 dígitos (DDD + 9 dígitos)
   const limitedNumbers = numbersOnly.slice(0, 11);
   
-  if (limitedNumbers.length <= 3) {
-    return limitedNumbers;
-  } else if (limitedNumbers.length <= 6) {
-    return `${limitedNumbers.slice(0, 3)}.${limitedNumbers.slice(3)}`;
-  } else if (limitedNumbers.length <= 9) {
-    return `${limitedNumbers.slice(0, 3)}.${limitedNumbers.slice(3, 6)}.${limitedNumbers.slice(6)}`;
+  // Aplica a máscara baseada na quantidade de dígitos
+  if (limitedNumbers.length <= 2) {
+    return `(${limitedNumbers}`;
+  } else if (limitedNumbers.length <= 7) {
+    return `(${limitedNumbers.slice(0, 2)}) ${limitedNumbers.slice(2)}`;
   } else {
-    return `${limitedNumbers.slice(0, 3)}.${limitedNumbers.slice(3, 6)}.${limitedNumbers.slice(6, 9)}-${limitedNumbers.slice(9)}`;
+    return `(${limitedNumbers.slice(0, 2)}) ${limitedNumbers.slice(2, 7)}-${limitedNumbers.slice(7)}`;
   }
 };
 
