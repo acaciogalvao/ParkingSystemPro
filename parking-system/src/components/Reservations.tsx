@@ -674,7 +674,21 @@ export function Reservations() {
           <p className="text-muted-foreground">Gerencie reservas de vagas</p>
         </div>
         
-        <Dialog open={showNewReservation} onOpenChange={setShowNewReservation}>
+        <Dialog open={showNewReservation} onOpenChange={(open) => {
+          setShowNewReservation(open);
+          if (open) {
+            // Quando abrir o modal, definir data e hora atuais como padrão
+            const now = new Date();
+            const currentDate = now.toISOString().split('T')[0];
+            const currentTime = now.toTimeString().slice(0, 5);
+            
+            setNewReservation(prev => ({
+              ...prev,
+              reservationDate: currentDate,
+              reservationTime: currentTime
+            }));
+          }
+        }}>
           <DialogTrigger asChild>
             <Button>
               <Plus className="h-4 w-4 mr-2" />
