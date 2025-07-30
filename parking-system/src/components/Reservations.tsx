@@ -203,6 +203,27 @@ export function Reservations() {
 
   const backendUrl = import.meta.env.VITE_BACKEND_URL || '';
 
+  // Update current time every second
+  useEffect(() => {
+    const updateCurrentTime = () => {
+      const now = new Date();
+      setCurrentTime(now.toLocaleString('pt-BR', { 
+        timeZone: 'America/Sao_Paulo',
+        day: '2-digit',
+        month: '2-digit', 
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit'
+      }));
+    };
+
+    updateCurrentTime(); // Set initial time
+    const interval = setInterval(updateCurrentTime, 1000);
+
+    return () => clearInterval(interval);
+  }, []);
+
   // Countdown timer for PIX payment expiration
   useEffect(() => {
     if (pixPaymentData && paymentStep === 'qr') {
