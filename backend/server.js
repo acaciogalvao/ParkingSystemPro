@@ -490,6 +490,25 @@ app.post('/api/reservations/create', async (req, res) => {
             });
         }
 
+        // Check if the same plate already has an active or pending reservation
+        const reservationsCollection = db.collection('reservations');
+        const existingReservation = await reservationsCollection.findOne({
+            plate: reservation.plate.toUpperCase(),
+            status: { $in: ['pending_payment', 'confirmed', 'active'] }
+        });
+
+        if (existingReservation) {
+            const statusMessages = {
+                'pending_payment': 'pendente de pagamento',
+                'confirmed': 'confirmada',
+                'active': 'ativa'
+            };
+            return res.status(400).json({
+                success: false,
+                error: `Esta placa já possui uma reserva ${statusMessages[existingReservation.status]}. Finalize ou cancele a reserva anterior antes de criar uma nova.`
+            });
+        }
+
         // Create reservation datetime
         const reservationDateTime = new Date(`${reservation.reservationDate}T${reservation.reservationTime}:00`);
         
@@ -517,6 +536,7 @@ app.post('/api/reservations/create', async (req, res) => {
             ownerName: reservation.ownerName,
             ownerPhone: reservation.ownerPhone,
             reservationDateTime: reservationDateTime.toISOString(),
+            reservationCreatedAt: currentTime.toISOString(), // Horário de criação da reserva
             duration: reservation.duration,
             fee: fee,
             status: 'pending_payment',
