@@ -841,6 +841,9 @@ export function Reservations() {
                     placeholder="000.000.000-00"
                     maxLength={14}
                   />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Formato: XXX.XXX.XXX-XX
+                  </p>
                 </div>
               </div>
 
