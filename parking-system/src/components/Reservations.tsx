@@ -880,7 +880,7 @@ export function Reservations() {
                 <Button 
                   className="flex-1"
                   onClick={handleCreateReservation}
-                  disabled={creating}
+                  disabled={creating || !plateValidation.isValid || !newReservation.ownerName.trim() || !newReservation.ownerPhone.trim() || !newReservation.payerEmail.trim() || !newReservation.payerCPF.trim() || !newReservation.reservationDate || !newReservation.reservationTime}
                 >
                   {creating && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
                   Criar Reserva
