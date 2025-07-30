@@ -573,6 +573,24 @@ app.post('/api/reservations/create', async (req, res) => {
                 amount: fee,
                 formattedAmount: `R$ ${formatBrazilianCurrency(fee)}`,
                 expiresAt: expiresAt.toISOString(),
+                reservationCreatedAt: currentTime.toISOString(),
+                formattedCreatedAt: currentTime.toLocaleString('pt-BR', { 
+                    timeZone: 'America/Sao_Paulo',
+                    day: '2-digit',
+                    month: '2-digit', 
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                }),
+                reservationDateTime: reservationDateTime.toISOString(),
+                formattedReservationDateTime: reservationDateTime.toLocaleString('pt-BR', { 
+                    timeZone: 'America/Sao_Paulo',
+                    day: '2-digit',
+                    month: '2-digit', 
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                }),
                 vehicle: {
                     plate: reservation.plate.toUpperCase(),
                     type: reservation.vehicleType,
