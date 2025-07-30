@@ -810,7 +810,14 @@ export function Reservations() {
                     type="time"
                     value={newReservation.reservationTime}
                     onChange={(e) => handleInputChange('reservationTime', e.target.value)}
+                    min={newReservation.reservationDate === new Date().toISOString().split('T')[0] ? 
+                      new Date(Date.now() + 30 * 60 * 1000).toTimeString().slice(0, 5) : 
+                      "00:00"
+                    }
                   />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Reserva deve ser feita com pelo menos 30 minutos de antecedência
+                  </p>
                 </div>
               </div>
 
