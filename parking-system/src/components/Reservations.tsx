@@ -44,6 +44,7 @@ interface Reservation {
   ownerName: string;
   ownerPhone: string;
   reservationDateTime: string;
+  reservationCreatedAt?: string;
   duration: number;
   fee: number;
   formattedFee: string;
@@ -51,6 +52,7 @@ interface Reservation {
   createdAt: string;
   expiresAt: string;
   formattedDateTime: string;
+  formattedCreatedAt?: string;
   endDateTime: string;
   formattedEndDateTime: string;
   paymentId?: string;
