@@ -320,26 +320,93 @@ export function Reservations() {
   const validateForm = () => {
     const { plate, ownerName, ownerPhone, reservationDate, reservationTime, payerEmail, payerCPF } = newReservation;
     
-    if (!plate || !ownerName || !ownerPhone || !reservationDate || !reservationTime || !payerEmail || !payerCPF) {
+    // Validar campos obrigatórios
+    if (!plate.trim()) {
       toast({
-        title: "Campos obrigatórios",
-        description: "Preencha todos os campos obrigatórios.",
+        title: "Campo obrigatório",
+        description: "Placa é obrigatória.",
         variant: "destructive"
       });
       return false;
     }
 
+    if (!ownerName.trim()) {
+      toast({
+        title: "Campo obrigatório",
+        description: "Nome do proprietário é obrigatório.",
+        variant: "destructive"
+      });
+      return false;
+    }
+
+    if (!ownerPhone.trim()) {
+      toast({
+        title: "Campo obrigatório",
+        description: "Telefone é obrigatório.",
+        variant: "destructive"
+      });
+      return false;
+    }
+
+    if (!reservationDate) {
+      toast({
+        title: "Campo obrigatório",
+        description: "Data da reserva é obrigatória.",
+        variant: "destructive"
+      });
+      return false;
+    }
+
+    if (!reservationTime) {
+      toast({
+        title: "Campo obrigatório",
+        description: "Hora da reserva é obrigatória.",
+        variant: "destructive"
+      });
+      return false;
+    }
+
+    if (!payerEmail.trim()) {
+      toast({
+        title: "Campo obrigatório",
+        description: "Email é obrigatório.",
+        variant: "destructive"
+      });
+      return false;
+    }
+
+    if (!payerCPF.trim()) {
+      toast({
+        title: "Campo obrigatório",
+        description: "CPF é obrigatório.",
+        variant: "destructive"
+      });
+      return false;
+    }
+
+    // Validar placa
     const plateValidation = validateBrazilianPlate(plate);
     if (!plateValidation.isValid) {
       toast({
         title: "Placa inválida",
-        description: plateValidation.error,
+        description: plateValidation.error || "Digite uma placa válida",
         variant: "destructive"
       });
       return false;
     }
 
-    // Validate email
+    // Validar telefone (deve ter pelo menos 10 dígitos)
+    const phoneDigits = ownerPhone.replace(/\D/g, '');
+    if (phoneDigits.length < 10) {
+      toast({
+        title: "Telefone inválido",
+        description: "Digite um telefone válido com DDD (mínimo 10 dígitos).",
+        variant: "destructive"
+      });
+      return false;
+    }
+
+    // Validar email
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(payerEmail)) {
       toast({
@@ -350,7 +417,7 @@ export function Reservations() {
       return false;
     }
 
-    // Validate CPF
+    // Validar CPF
     if (!validateCPF(payerCPF)) {
       toast({
         title: "CPF inválido",
@@ -360,12 +427,15 @@ export function Reservations() {
       return false;
     }
 
-    // Validate date/time is in the future
+    // Validar data/hora é no futuro
     const reservationDateTime = new Date(`${reservationDate}T${reservationTime}:00`);
-    if (reservationDateTime <= new Date()) {
+    const now = new Date();
+    const thirtyMinutesFromNow = new Date(now.getTime() + 30 * 60 * 1000);
+    
+    if (reservationDateTime <= thirtyMinutesFromNow) {
       toast({
         title: "Data/hora inválida",
-        description: "A reserva deve ser para uma data e hora futura.",
+        description: "A reserva deve ser feita com pelo menos 30 minutos de antecedência.",
         variant: "destructive"
       });
       return false;
