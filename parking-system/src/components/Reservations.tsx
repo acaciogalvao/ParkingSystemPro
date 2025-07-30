@@ -469,7 +469,7 @@ export function Reservations() {
           description: "Realize o pagamento para confirmar a reserva.",
         });
 
-        // Reset form
+        // Reset form and validation
         setNewReservation({
           vehicleType: 'car',
           plate: '',
@@ -481,6 +481,7 @@ export function Reservations() {
           payerEmail: '',
           payerCPF: ''
         });
+        setPlateValidation({ isValid: false, type: null, error: null });
 
         fetchReservations();
       } else {
