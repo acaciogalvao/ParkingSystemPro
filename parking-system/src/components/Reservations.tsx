@@ -372,6 +372,11 @@ export function Reservations() {
       const validation = validateBrazilianPlate(formattedValue);
       setPlateValidation(validation);
       value = formattedValue;
+      
+      // Check if plate already exists (debounced)
+      setTimeout(() => {
+        checkPlateExists(formattedValue);
+      }, 500);
     } else if (field === 'payerCPF') {
       value = formatCPF(value as string);
     } else if (field === 'ownerPhone') {
