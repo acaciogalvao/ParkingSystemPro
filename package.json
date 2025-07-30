@@ -1,65 +1,9 @@
 {
   "name": "parksystem-pro",
   "version": "1.0.0",
-  "description": "Sistema completo de gestão de estacionamento com pagamentos integrados",
-  "main": "index.js",
   "scripts": {
-    "install:all": "npm run install:backend && npm run install:frontend",
-    "install:backend": "cd backend && npm install",
-    "install:frontend": "cd parking-system && yarn install",
     "start": "./start.sh",
-    "stop": "./stop.sh",
-    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
-    "dev:backend": "cd backend && npm run dev",
-    "dev:frontend": "cd parking-system && yarn dev",
-    "build": "npm run build:frontend",
-    "build:frontend": "cd parking-system && yarn build",
-    "test": "npm run test:backend && npm run test:frontend",
-    "test:backend": "cd backend && npm test",
-    "test:frontend": "cd parking-system && yarn test",
-    "lint": "npm run lint:backend && npm run lint:frontend",
-    "lint:backend": "cd backend && npm run lint",
-    "lint:frontend": "cd parking-system && yarn lint",
-    "clean": "npm run clean:backend && npm run clean:frontend",
-    "clean:backend": "cd backend && rm -rf node_modules package-lock.json",
-    "clean:frontend": "cd parking-system && rm -rf node_modules yarn.lock",
-    "reset": "npm run clean && npm run install:all",
-    "docker:up": "docker-compose up -d",
-    "docker:down": "docker-compose down",
-    "docker:build": "docker-compose up -d --build",
-    "docker:logs": "docker-compose logs -f",
-    "health": "./health-check.sh",
-    "logs": "./logs.sh",
-    "quick-start": "./quick-start.sh"
+    "stop": "./stop.sh"
   },
-  "keywords": [
-    "parking",
-    "management",
-    "payment",
-    "pix",
-    "mercadopago",
-    "react",
-    "nodejs",
-    "mongodb",
-    "gestao",
-    "estacionamento"
-  ],
-  "author": "ParkSystem Pro Team",
-  "license": "MIT",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/seu-usuario/parksystem-pro.git"
-  },
-  "bugs": {
-    "url": "https://github.com/seu-usuario/parksystem-pro/issues"
-  },
-  "homepage": "https://github.com/seu-usuario/parksystem-pro#readme",
-  "engines": {
-    "node": ">=18.0.0",
-    "npm": ">=8.0.0"
-  },
-  "devDependencies": {
-    "concurrently": "^8.2.2"
-  },
-  "dependencies": {}
+  "license": "MIT"
 }
