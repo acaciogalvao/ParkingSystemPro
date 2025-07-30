@@ -417,6 +417,7 @@ app.get('/api/reservations', async (req, res) => {
         const formattedReservations = reservations.map(reservation => {
             const startDateTime = new Date(reservation.reservationDateTime);
             const endDateTime = new Date(startDateTime.getTime() + (reservation.duration * 60 * 60 * 1000));
+            const createdDateTime = reservation.reservationCreatedAt ? new Date(reservation.reservationCreatedAt) : new Date(reservation.createdAt);
             
             return {
                 id: reservation.id,
@@ -425,6 +426,7 @@ app.get('/api/reservations', async (req, res) => {
                 ownerName: reservation.ownerName,
                 ownerPhone: reservation.ownerPhone,
                 reservationDateTime: reservation.reservationDateTime,
+                reservationCreatedAt: reservation.reservationCreatedAt || reservation.createdAt,
                 duration: reservation.duration,
                 fee: reservation.fee,
                 formattedFee: `R$ ${formatBrazilianCurrency(reservation.fee)}`,
@@ -432,6 +434,14 @@ app.get('/api/reservations', async (req, res) => {
                 createdAt: reservation.createdAt,
                 expiresAt: reservation.expiresAt,
                 formattedDateTime: startDateTime.toLocaleString('pt-BR', { 
+                    timeZone: 'America/Sao_Paulo',
+                    day: '2-digit',
+                    month: '2-digit', 
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                }),
+                formattedCreatedAt: createdDateTime.toLocaleString('pt-BR', { 
                     timeZone: 'America/Sao_Paulo',
                     day: '2-digit',
                     month: '2-digit', 
