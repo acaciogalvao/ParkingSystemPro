@@ -301,9 +301,14 @@ export function Reservations() {
 
   const handleInputChange = (field: keyof NewReservation, value: string | number) => {
     if (field === 'plate') {
-      value = formatPlateInput(value as string);
+      const formattedValue = formatPlateInput(value as string);
+      const validation = validateBrazilianPlate(formattedValue);
+      setPlateValidation(validation);
+      value = formattedValue;
     } else if (field === 'payerCPF') {
       value = formatCPF(value as string);
+    } else if (field === 'ownerPhone') {
+      value = formatPhoneInput(value as string);
     }
     
     setNewReservation(prev => ({
