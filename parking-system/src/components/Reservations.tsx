@@ -513,6 +513,16 @@ export function Reservations() {
       return false;
     }
 
+    // Validar placa existente
+    if (plateExists.exists) {
+      toast({
+        title: "Placa já possui reserva",
+        description: plateExists.message || "Esta placa já possui uma reserva ativa",
+        variant: "destructive"
+      });
+      return false;
+    }
+
     return true;
   };
 
