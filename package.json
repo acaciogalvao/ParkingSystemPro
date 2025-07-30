@@ -1,9 +1,0 @@
-{
-  "name": "parksystem-pro",
-  "version": "1.0.0",
-  "scripts": {
-    "start": "./start.sh",
-    "stop": "./stop.sh"
-  },
-  "license": "MIT"
-}
