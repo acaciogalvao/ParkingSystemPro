@@ -94,12 +94,10 @@ const formatPhoneInput = (value: string): string => {
   // Aplica a máscara baseada na quantidade de dígitos
   if (limitedNumbers.length <= 2) {
     return `(${limitedNumbers}`;
-  } else if (limitedNumbers.length <= 3) {
-    return `(${limitedNumbers.slice(0, 2)})${limitedNumbers.slice(2)}`;
-  } else if (limitedNumbers.length <= 8) {
-    return `(${limitedNumbers.slice(0, 2)})${limitedNumbers.slice(2, 3)}${limitedNumbers.slice(3)}`;
+  } else if (limitedNumbers.length <= 7) {
+    return `(${limitedNumbers.slice(0, 2)}) ${limitedNumbers.slice(2)}`;
   } else {
-    return `(${limitedNumbers.slice(0, 2)})${limitedNumbers.slice(2, 7)}-${limitedNumbers.slice(7)}`;
+    return `(${limitedNumbers.slice(0, 2)}) ${limitedNumbers.slice(2, 7)}-${limitedNumbers.slice(7)}`;
   }
 };
 
